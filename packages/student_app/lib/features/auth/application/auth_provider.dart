@@ -45,7 +45,7 @@ class AuthState {
 
 /// Provider for the API client instance.
 final apiClientProvider = Provider<MyKizApiClient>((ref) {
-  return MyKizApiClient(baseUrl: 'http://localhost:8080');
+  return MyKizApiClient(baseUrl: 'https://app.isaacfurqan.me');
 });
 
 /// Notifier that manages authentication state.
