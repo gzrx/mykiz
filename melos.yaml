@@ -1,0 +1,32 @@
+name: mykiz
+repository: https://github.com/gzrx/mykiz
+
+packages:
+  - packages/**
+
+scripts:
+  build_runner:
+    run: dart run build_runner build --delete-conflicting-outputs
+    description: Run build_runner in all packages that depend on it.
+    packageFilters:
+      dependsOn: build_runner
+
+  test:
+    run: dart test
+    description: Run tests in all packages.
+    packageFilters:
+      dirExists: test
+
+  analyze:
+    run: dart analyze .
+    description: Run dart analyze in all packages.
+
+  format:
+    run: dart format .
+    description: Run dart format in all packages.
+
+  seed:
+    run: dart run bin/seed.dart
+    description: Run the database seed script.
+    packageFilters:
+      scope: backend

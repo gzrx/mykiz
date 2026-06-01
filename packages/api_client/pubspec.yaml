@@ -1,0 +1,17 @@
+name: api_client
+description: Typed HTTP client for the MyKIZ Backend API using dio.
+version: 0.1.0
+publish_to: none
+
+environment:
+  sdk: ">=3.0.0 <4.0.0"
+
+dependencies:
+  dio: ^5.4.0
+  shared_core:
+    path: ../shared_core
+
+dev_dependencies:
+  test: ^1.24.0
+  glados: ^1.1.1
+  mocktail: ^1.0.0
