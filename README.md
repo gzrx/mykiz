@@ -1,4 +1,4 @@
-# MyKIZ Platform
+# MyKIZ - One-Stop Student Living Platform
 
 A modular platform for **Kolej Ibu Zain (KIZ)** at Universiti Kebangsaan Malaysia (UKM), delivering a one-stop student living experience through three applications sharing a common backend.
 
@@ -22,36 +22,36 @@ A modular platform for **Kolej Ibu Zain (KIZ)** at Universiti Kebangsaan Malaysi
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│                    Client Applications                    │
+│                    Client Applications                  │
 │  ┌──────────────────┐       ┌──────────────────────┐    │
 │  │  MyKIZ Admin     │       │  MyKIZ Siswa         │    │
 │  │  (Flutter Web)   │       │  (Flutter Mobile)    │    │
 │  └────────┬─────────┘       └──────────┬───────────┘    │
-└───────────┼─────────────────────────────┼───────────────┘
-            │                             │
-            ▼                             ▼
+└───────────┼────────────────────────────┼────────────────┘
+            │                            │
+            ▼                            ▼
 ┌─────────────────────────────────────────────────────────┐
-│                    Shared Packages                        │
+│                    Shared Packages                      │
 │  ┌──────────────────┐       ┌──────────────────────┐    │
-│  │  api_client       │──────▶│  shared_core         │    │
-│  │  (dio HTTP)       │       │  (freezed models)    │    │
+│  │  api_client      │------>│  shared_core         │    │
+│  │  (dio HTTP)      │       │  (freezed models)    │    │
 │  └────────┬─────────┘       └──────────────────────┘    │
 └───────────┼─────────────────────────────────────────────┘
             │
             ▼
 ┌─────────────────────────────────────────────────────────┐
-│              Backend — Dart Frog :8080                    │
-│  ┌─────────┐  ┌──────────────┐  ┌─────────────────┐    │
-│  │  Auth   │  │ Announcements│  │   Complaints    │    │
-│  │ Service │  │   Service    │  │    Service      │    │
-│  └────┬────┘  └──────┬───────┘  └───────┬─────────┘    │
+│              Backend — Dart Frog :8080                  │
+│  ┌─────────┐  ┌──────────────┐  ┌─────────────────┐     │
+│  │  Auth   │  │ Announcements│  │   Complaints    │     │
+│  │ Service │  │   Service    │  │    Service      │     │
+│  └────┬────┘  └──────┬───────┘  └───────┬─────────┘     │
 └───────┼──────────────┼──────────────────┼───────────────┘
         │              │                  │
         ▼              ▼                  ▼
-┌──────────────┐              ┌──────────────────┐
-│  PostgreSQL  │              │      MinIO       │
-│    :5432     │              │   :9000/:9001    │
-└──────────────┘              └──────────────────┘
+        ┌──────────────┐         ┌──────────────────┐
+        │  PostgreSQL  │         │      MinIO       │
+        │    :5432     │         │   :9000/:9001    │
+        └──────────────┘         └──────────────────┘
 ```
 
 ## Monorepo Structure
