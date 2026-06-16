@@ -44,7 +44,7 @@ class AuthService {
   Future<LoginResult> login(String identifier, String password) async {
     // Query user by identifier
     final result = await Database.query(
-      'SELECT id, identifier, password_hash, role, name FROM users '
+      'SELECT id, identifier, password_hash, role, name, created_at FROM users '
       'WHERE identifier = @identifier',
       parameters: {'identifier': identifier},
     );
@@ -73,6 +73,7 @@ class AuthService {
     final userIdentifier = row[1] as String; // identifier
     final role = row[3] as String; // role
     final name = row[4] as String; // name
+    final createdAt = row[5] as DateTime; // created_at
 
     // Issue JWT with HMAC-SHA256
     final jwtSecret =
@@ -100,6 +101,7 @@ class AuthService {
         'identifier': userIdentifier,
         'name': name,
         'role': role,
+        'createdAt': createdAt.toIso8601String(),
       },
     );
   }

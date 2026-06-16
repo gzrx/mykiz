@@ -28,6 +28,9 @@ pubspec.lock
 # Kiro specs (development tooling)
 .kiro/
 
+# Graphify
+graphify-out/
+
 # OS
 .DS_Store
 Thumbs.db
