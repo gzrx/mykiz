@@ -6,12 +6,14 @@ import '../../features/announcements/presentation/announcement_form_screen.dart'
 import '../../features/announcements/presentation/announcements_screen.dart';
 import '../../features/auth/application/auth_provider.dart';
 import '../../features/auth/presentation/login_screen.dart';
+import '../../features/dashboard/presentation/dashboard_screen.dart';
 import '../../features/complaints/presentation/complaint_detail_screen.dart';
 import '../../features/complaints/presentation/complaints_screen.dart';
 
 /// Route paths used throughout the application.
 abstract final class AppRoutes {
   static const String login = '/login';
+  static const String dashboard = '/dashboard';
   static const String announcements = '/announcements';
   static const String announcementCreate = '/announcements/create';
   static const String complaints = '/complaints';
@@ -31,7 +33,7 @@ abstract final class AppRoutes {
 ///
 /// The router listens to auth state changes and redirects accordingly:
 /// - Unauthenticated users are redirected to /login
-/// - Authenticated users on /login are redirected to /announcements (dashboard)
+/// - Authenticated users on /login or / are redirected to /dashboard
 final appRouterProvider = Provider<GoRouter>((ref) {
   final authState = ref.watch(authProvider);
 
@@ -46,9 +48,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         return AppRoutes.login;
       }
 
-      // If authenticated and on login page, redirect to dashboard
-      if (isAuthenticated && isOnLogin) {
-        return AppRoutes.announcements;
+      // If authenticated and on login or root, redirect to dashboard
+      if (isAuthenticated && (isOnLogin || state.matchedLocation == '/')) {
+        return AppRoutes.dashboard;
       }
 
       // No redirect needed
@@ -58,6 +60,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.login,
         builder: (context, state) => const LoginScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.dashboard,
+        builder: (context, state) => const DashboardScreen(),
       ),
       GoRoute(
         path: AppRoutes.announcements,

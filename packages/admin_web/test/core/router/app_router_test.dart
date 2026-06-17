@@ -2,13 +2,14 @@ import 'package:api_client/api_client.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 import 'package:shared_core/shared_core.dart';
 
 import 'package:admin_web/core/router/app_router.dart';
 import 'package:admin_web/features/auth/application/auth_provider.dart';
 import 'package:admin_web/features/auth/data/auth_repository.dart';
 
-/// A fake [AuthRepository] for testing router redirects.
+/// Fake repository that always succeeds login.
 class FakeAuthRepository extends AuthRepository {
   FakeAuthRepository() : super(MyKizApiClient(baseUrl: 'http://test'));
 
@@ -18,89 +19,126 @@ class FakeAuthRepository extends AuthRepository {
     required String password,
   }) async {
     return LoginResponse(
-      token: 'test-token',
+      token: 'tok',
       user: User(
-        id: 'user-1',
+        id: '1',
         identifier: identifier,
-        name: 'Admin',
+        name: 'Test',
         role: 'admin',
-        createdAt: DateTime(2024, 1, 1),
+        createdAt: DateTime(2024),
       ),
     );
   }
 }
 
+/// Creates a [ProviderContainer] with standard test overrides.
+ProviderContainer _container() => ProviderContainer(
+      overrides: [
+        authRepositoryProvider.overrideWithValue(FakeAuthRepository()),
+        apiClientProvider.overrideWithValue(
+          MyKizApiClient(baseUrl: 'http://test'),
+        ),
+      ],
+    );
+
+/// Pumps a [MaterialApp.router] wired to [appRouterProvider].
+Future<void> _pumpRouter(WidgetTester tester, ProviderContainer container) {
+  return tester.pumpWidget(
+    UncontrolledProviderScope(
+      container: container,
+      child: Consumer(
+        builder: (context, ref, _) {
+          final router = ref.watch(appRouterProvider);
+          return MaterialApp.router(routerConfig: router);
+        },
+      ),
+    ),
+  );
+}
+
 void main() {
   group('AppRouter redirect guard', () {
-    testWidgets('unauthenticated user is shown login screen', (tester) async {
-      final container = ProviderContainer(
-        overrides: [
-          authRepositoryProvider.overrideWithValue(FakeAuthRepository()),
-          apiClientProvider.overrideWithValue(
-            MyKizApiClient(baseUrl: 'http://test'),
-          ),
-        ],
-      );
+    // Requirement 1.2: Unauthenticated on /dashboard → /login
+    testWidgets('unauthenticated user on /dashboard redirects to /login',
+        (tester) async {
+      final container = _container();
+      addTearDown(container.dispose);
 
-      await tester.pumpWidget(
-        UncontrolledProviderScope(
-          container: container,
-          child: Consumer(
-            builder: (context, ref, _) {
-              final router = ref.watch(appRouterProvider);
-              return MaterialApp.router(
-                routerConfig: router,
-              );
-            },
-          ),
-        ),
-      );
+      // Auth state is unauthenticated by default.
+      // Router initial location is /login, but redirect logic should guard
+      // /dashboard → /login for unauthenticated users. Verify via router
+      // redirect function directly.
+      final router = container.read(appRouterProvider);
+      // Navigate to /dashboard
+      router.go('/dashboard');
+      await _pumpRouter(tester, container);
       await tester.pumpAndSettle();
 
-      // Should show login screen (contains Staff ID field)
+      // Should show login (Staff ID field) since user is unauthenticated
       expect(find.text('Staff ID'), findsOneWidget);
-      expect(find.text('MyKIZ Admin'), findsOneWidget);
-
-      container.dispose();
     });
 
-    testWidgets('authenticated user on /login is redirected to announcements',
+    // Requirement 1.1: Authenticated on /login → /dashboard
+    testWidgets('authenticated user on /login redirects to /dashboard',
         (tester) async {
-      final container = ProviderContainer(
-        overrides: [
-          authRepositoryProvider.overrideWithValue(FakeAuthRepository()),
-          apiClientProvider.overrideWithValue(
-            MyKizApiClient(baseUrl: 'http://test'),
-          ),
-        ],
-      );
+      final container = _container();
+      addTearDown(container.dispose);
 
-      // Login first
-      await container.read(authProvider.notifier).login(
-            identifier: 'S12345',
-            password: 'password123',
-          );
+      // Authenticate
+      await container
+          .read(authProvider.notifier)
+          .login(identifier: 'S1', password: 'p');
 
-      await tester.pumpWidget(
-        UncontrolledProviderScope(
-          container: container,
-          child: Consumer(
-            builder: (context, ref, _) {
-              final router = ref.watch(appRouterProvider);
-              return MaterialApp.router(
-                routerConfig: router,
-              );
-            },
-          ),
-        ),
-      );
+      await _pumpRouter(tester, container);
       await tester.pumpAndSettle();
 
-      // Should be redirected away from login to announcements
+      // Initial location is /login → should redirect to /dashboard
+      expect(find.text('Dashboard'), findsOneWidget);
       expect(find.text('Staff ID'), findsNothing);
-      expect(find.text('Announcements'), findsOneWidget);
+    });
 
-      container.dispose();
+    // Requirement 1.3: Authenticated on / → /dashboard
+    testWidgets('authenticated user on / redirects to /dashboard',
+        (tester) async {
+      final container = _container();
+      addTearDown(container.dispose);
+
+      await container
+          .read(authProvider.notifier)
+          .login(identifier: 'S1', password: 'p');
+
+      await _pumpRouter(tester, container);
+      await tester.pumpAndSettle();
+
+      final router = container.read(appRouterProvider);
+      router.go('/');
+      await tester.pumpAndSettle();
+
+      expect(find.text('Dashboard'), findsOneWidget);
+    });
+
+    // Requirement 1.4: Authenticated user accessing /login directly → /dashboard
+    testWidgets(
+        'authenticated user accessing /login directly redirects to /dashboard',
+        (tester) async {
+      final container = _container();
+      addTearDown(container.dispose);
+
+      await container
+          .read(authProvider.notifier)
+          .login(identifier: 'S1', password: 'p');
+
+      await _pumpRouter(tester, container);
+      await tester.pumpAndSettle();
+
+      // Explicitly navigate to /login while authenticated
+      final router = container.read(appRouterProvider);
+      router.go('/login');
+      await tester.pumpAndSettle();
+
+      // Should still be on dashboard
+      expect(find.text('Dashboard'), findsOneWidget);
+      expect(find.text('Staff ID'), findsNothing);
     });
   });
 }
