@@ -7,14 +7,33 @@ import '../../features/auth/presentation/login_screen.dart';
 import '../../features/complaints/presentation/complaint_detail_screen.dart';
 import '../../features/complaints/presentation/complaint_submit_screen.dart';
 import '../../features/complaints/presentation/complaints_list_screen.dart';
+import '../../features/announcements/presentation/announcements_list_screen.dart';
+import '../../features/dashboard/presentation/dashboard_screen.dart';
 
 /// Application route paths.
 abstract final class AppRoutes {
   static const String login = '/login';
+  static const String dashboard = '/dashboard';
   static const String announcements = '/announcements';
   static const String complaints = '/complaints';
   static const String complaintDetail = '/complaints/:id';
   static const String complaintSubmit = '/complaints/new';
+}
+
+/// Pure function implementing the router redirect truth table.
+///
+/// Returns the redirect path (or null for no redirect) given the current
+/// [status] and the [currentRoute] the user is attempting to visit.
+String? computeRedirect(AuthStatus status, String currentRoute) {
+  if (status == AuthStatus.loading) return null;
+
+  final isAuthenticated = status == AuthStatus.authenticated;
+  final isOnLogin = currentRoute == AppRoutes.login;
+
+  if (!isAuthenticated && !isOnLogin) return AppRoutes.login;
+  if (isAuthenticated && isOnLogin) return AppRoutes.dashboard;
+
+  return null;
 }
 
 /// GoRouter configuration provider with auth redirect guard.
@@ -22,34 +41,21 @@ final appRouterProvider = Provider<GoRouter>((ref) {
   final authState = ref.watch(authProvider);
 
   return GoRouter(
-    initialLocation: AppRoutes.login,
-    redirect: (context, state) {
-      final isAuthenticated = authState.status == AuthStatus.authenticated;
-      final isOnLogin = state.matchedLocation == AppRoutes.login;
-
-      // If not authenticated and not on login page, redirect to login.
-      if (!isAuthenticated && !isOnLogin) {
-        return AppRoutes.login;
-      }
-
-      // If authenticated and on login page, redirect to announcements.
-      if (isAuthenticated && isOnLogin) {
-        return AppRoutes.announcements;
-      }
-
-      // No redirect needed.
-      return null;
-    },
+    initialLocation: AppRoutes.dashboard,
+    redirect: (context, state) =>
+        computeRedirect(authState.status, state.matchedLocation),
     routes: [
       GoRoute(
         path: AppRoutes.login,
         builder: (context, state) => const LoginScreen(),
       ),
       GoRoute(
+        path: AppRoutes.dashboard,
+        builder: (context, state) => const DashboardScreen(),
+      ),
+      GoRoute(
         path: AppRoutes.announcements,
-        builder: (context, state) => const Scaffold(
-          body: Center(child: Text('Announcements')),
-        ),
+        builder: (context, state) => const AnnouncementsListScreen(),
       ),
       GoRoute(
         path: AppRoutes.complaints,
