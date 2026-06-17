@@ -10,6 +10,11 @@ import 'package:postgres/postgres.dart';
 /// - 2 Admin accounts (Staff IDs: S98765, S87654)
 /// - 5 announcements authored by seeded Admins
 /// - 4 complaints owned by seeded Students with mixed statuses
+/// - 3 Blocks (A, B, C) with rooms and beds:
+///   - Block A: 3 single + 2 twin_sharing rooms
+///   - Block B: 2 single + 3 twin_sharing rooms
+///   - Block C: 2 single + 2 twin_sharing rooms
+///   (single = 1 bed 'A', twin_sharing = 2 beds 'A'+'B')
 ///
 /// Idempotent: uses INSERT ... ON CONFLICT DO NOTHING so re-running is safe.
 ///
@@ -43,6 +48,65 @@ void main() async {
     '00000000-0000-4000-c000-000000000002',
     '00000000-0000-4000-c000-000000000003',
     '00000000-0000-4000-c000-000000000004',
+  ];
+
+  // --- Accommodation physical structure IDs ---
+  const blockIds = [
+    '00000000-0000-4000-d000-000000000001', // Block A
+    '00000000-0000-4000-d000-000000000002', // Block B
+    '00000000-0000-4000-d000-000000000003', // Block C
+  ];
+
+  // Rooms: Block A (A-101..A-105), Block B (B-101..B-105), Block C (C-101..C-104)
+  const roomIds = [
+    // Block A rooms
+    '00000000-0000-4000-d100-000000000001', // A-101 single
+    '00000000-0000-4000-d100-000000000002', // A-102 single
+    '00000000-0000-4000-d100-000000000003', // A-103 single
+    '00000000-0000-4000-d100-000000000004', // A-104 twin_sharing
+    '00000000-0000-4000-d100-000000000005', // A-105 twin_sharing
+    // Block B rooms
+    '00000000-0000-4000-d100-000000000006', // B-101 single
+    '00000000-0000-4000-d100-000000000007', // B-102 single
+    '00000000-0000-4000-d100-000000000008', // B-103 twin_sharing
+    '00000000-0000-4000-d100-000000000009', // B-104 twin_sharing
+    '00000000-0000-4000-d100-00000000000a', // B-105 twin_sharing
+    // Block C rooms
+    '00000000-0000-4000-d100-00000000000b', // C-101 single
+    '00000000-0000-4000-d100-00000000000c', // C-102 single
+    '00000000-0000-4000-d100-00000000000d', // C-103 twin_sharing
+    '00000000-0000-4000-d100-00000000000e', // C-104 twin_sharing
+  ];
+
+  // Beds: 1 per single room, 2 per twin_sharing room
+  const bedIds = [
+    // Block A single rooms (1 bed each)
+    '00000000-0000-4000-d200-000000000001', // A-101 bed A
+    '00000000-0000-4000-d200-000000000002', // A-102 bed A
+    '00000000-0000-4000-d200-000000000003', // A-103 bed A
+    // Block A twin_sharing rooms (2 beds each)
+    '00000000-0000-4000-d200-000000000004', // A-104 bed A
+    '00000000-0000-4000-d200-000000000005', // A-104 bed B
+    '00000000-0000-4000-d200-000000000006', // A-105 bed A
+    '00000000-0000-4000-d200-000000000007', // A-105 bed B
+    // Block B single rooms (1 bed each)
+    '00000000-0000-4000-d200-000000000008', // B-101 bed A
+    '00000000-0000-4000-d200-000000000009', // B-102 bed A
+    // Block B twin_sharing rooms (2 beds each)
+    '00000000-0000-4000-d200-00000000000a', // B-103 bed A
+    '00000000-0000-4000-d200-00000000000b', // B-103 bed B
+    '00000000-0000-4000-d200-00000000000c', // B-104 bed A
+    '00000000-0000-4000-d200-00000000000d', // B-104 bed B
+    '00000000-0000-4000-d200-00000000000e', // B-105 bed A
+    '00000000-0000-4000-d200-00000000000f', // B-105 bed B
+    // Block C single rooms (1 bed each)
+    '00000000-0000-4000-d200-000000000010', // C-101 bed A
+    '00000000-0000-4000-d200-000000000011', // C-102 bed A
+    // Block C twin_sharing rooms (2 beds each)
+    '00000000-0000-4000-d200-000000000012', // C-103 bed A
+    '00000000-0000-4000-d200-000000000013', // C-103 bed B
+    '00000000-0000-4000-d200-000000000014', // C-104 bed A
+    '00000000-0000-4000-d200-000000000015', // C-104 bed B
   ];
 
   final connection = await Connection.open(
@@ -209,11 +273,117 @@ void main() async {
       );
     }
 
+    // --- Seed Blocks ---
+    print('  Creating accommodation blocks...');
+    await connection.execute(
+      Sql.named(
+        'INSERT INTO blocks (id, name) VALUES '
+        "(@id1, 'Block A'), "
+        "(@id2, 'Block B'), "
+        "(@id3, 'Block C') "
+        'ON CONFLICT (id) DO NOTHING',
+      ),
+      parameters: {
+        'id1': blockIds[0],
+        'id2': blockIds[1],
+        'id3': blockIds[2],
+      },
+    );
+
+    // --- Seed Rooms ---
+    print('  Creating rooms...');
+    // Room data: [id, block_id, room_number, room_type]
+    final rooms = [
+      // Block A: 3 single + 2 twin_sharing
+      [roomIds[0], blockIds[0], 'A-101', 'single'],
+      [roomIds[1], blockIds[0], 'A-102', 'single'],
+      [roomIds[2], blockIds[0], 'A-103', 'single'],
+      [roomIds[3], blockIds[0], 'A-104', 'twin_sharing'],
+      [roomIds[4], blockIds[0], 'A-105', 'twin_sharing'],
+      // Block B: 2 single + 3 twin_sharing
+      [roomIds[5], blockIds[1], 'B-101', 'single'],
+      [roomIds[6], blockIds[1], 'B-102', 'single'],
+      [roomIds[7], blockIds[1], 'B-103', 'twin_sharing'],
+      [roomIds[8], blockIds[1], 'B-104', 'twin_sharing'],
+      [roomIds[9], blockIds[1], 'B-105', 'twin_sharing'],
+      // Block C: 2 single + 2 twin_sharing
+      [roomIds[10], blockIds[2], 'C-101', 'single'],
+      [roomIds[11], blockIds[2], 'C-102', 'single'],
+      [roomIds[12], blockIds[2], 'C-103', 'twin_sharing'],
+      [roomIds[13], blockIds[2], 'C-104', 'twin_sharing'],
+    ];
+
+    for (final room in rooms) {
+      await connection.execute(
+        Sql.named(
+          'INSERT INTO rooms (id, block_id, room_number, room_type) '
+          'VALUES (@id, @block_id, @room_number, @room_type) '
+          'ON CONFLICT (id) DO NOTHING',
+        ),
+        parameters: {
+          'id': room[0],
+          'block_id': room[1],
+          'room_number': room[2],
+          'room_type': room[3],
+        },
+      );
+    }
+
+    // --- Seed Beds ---
+    // Invariant: single rooms get 1 bed (label 'A'),
+    //            twin_sharing rooms get 2 beds (labels 'A' and 'B')
+    print('  Creating beds...');
+    final beds = [
+      // Block A single rooms — 1 bed each
+      [bedIds[0], roomIds[0], 'A'],
+      [bedIds[1], roomIds[1], 'A'],
+      [bedIds[2], roomIds[2], 'A'],
+      // Block A twin_sharing rooms — 2 beds each
+      [bedIds[3], roomIds[3], 'A'],
+      [bedIds[4], roomIds[3], 'B'],
+      [bedIds[5], roomIds[4], 'A'],
+      [bedIds[6], roomIds[4], 'B'],
+      // Block B single rooms — 1 bed each
+      [bedIds[7], roomIds[5], 'A'],
+      [bedIds[8], roomIds[6], 'A'],
+      // Block B twin_sharing rooms — 2 beds each
+      [bedIds[9], roomIds[7], 'A'],
+      [bedIds[10], roomIds[7], 'B'],
+      [bedIds[11], roomIds[8], 'A'],
+      [bedIds[12], roomIds[8], 'B'],
+      [bedIds[13], roomIds[9], 'A'],
+      [bedIds[14], roomIds[9], 'B'],
+      // Block C single rooms — 1 bed each
+      [bedIds[15], roomIds[10], 'A'],
+      [bedIds[16], roomIds[11], 'A'],
+      // Block C twin_sharing rooms — 2 beds each
+      [bedIds[17], roomIds[12], 'A'],
+      [bedIds[18], roomIds[12], 'B'],
+      [bedIds[19], roomIds[13], 'A'],
+      [bedIds[20], roomIds[13], 'B'],
+    ];
+
+    for (final bed in beds) {
+      await connection.execute(
+        Sql.named(
+          'INSERT INTO beds (id, room_id, bed_label) '
+          'VALUES (@id, @room_id, @bed_label) '
+          'ON CONFLICT (id) DO NOTHING',
+        ),
+        parameters: {
+          'id': bed[0],
+          'room_id': bed[1],
+          'bed_label': bed[2],
+        },
+      );
+    }
+
     print('✅ Seed completed successfully!');
     print('   - 3 Students (A123456, A234567, A345678)');
     print('   - 2 Admins (S98765, S87654)');
     print('   - 5 Announcements');
     print('   - 4 Complaints (2 submitted, 1 in_progress, 1 resolved)');
+    print('   - 3 Blocks (A, B, C) with 14 rooms and 21 beds');
     print('   Password for all accounts: password123');
   } catch (e, st) {
     print('❌ Seed failed: $e');

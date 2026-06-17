@@ -60,6 +60,14 @@ class ApiTimeoutException extends ApiException {
   });
 }
 
+/// Thrown when a conflict occurs (HTTP 409), e.g. BED_UNAVAILABLE.
+class ConflictException extends ApiException {
+  const ConflictException({
+    required super.code,
+    required super.message,
+  });
+}
+
 /// Thrown when the server encounters an internal error (HTTP 500).
 class ServerException extends ApiException {
   const ServerException({

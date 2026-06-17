@@ -49,4 +49,10 @@ final List<ModuleRegistryEntry> moduleRegistry = dedupRegistry([
     routePath: '/complaints',
     badgeProvider: complaintsBadgeProvider,
   ),
+  ModuleRegistryEntry(
+    label: 'Accommodation',
+    icon: Icons.hotel_outlined,
+    routePath: '/accommodation',
+    badgeProvider: accommodationBadgeProvider,
+  ),
 ]);

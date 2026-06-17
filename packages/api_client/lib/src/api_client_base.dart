@@ -21,6 +21,14 @@ class PaginatedResponse<T> {
   final PaginationMeta meta;
 }
 
+/// Response for the student's own applications endpoint.
+class MyApplicationsResponse {
+  const MyApplicationsResponse({required this.active, required this.history});
+
+  final List<AccommodationApplication> active;
+  final List<AccommodationApplication> history;
+}
+
 /// Typed HTTP client for the MyKIZ Backend API.
 ///
 /// Wraps [Dio] with typed methods for all backend endpoints, automatic
@@ -250,6 +258,250 @@ class MyKizApiClient {
   }
 
   // ---------------------------------------------------------------------------
+  // Accommodation
+  // ---------------------------------------------------------------------------
+
+  /// Returns the current accommodation settings (application window status).
+  ///
+  /// GET /api/v1/accommodation/settings
+  Future<Map<String, dynamic>> getAccommodationSettings() async {
+    final response = await _request<Map<String, dynamic>>(
+      () => _dio.get<Map<String, dynamic>>('/api/v1/accommodation/settings'),
+    );
+    return response['data'] as Map<String, dynamic>;
+  }
+
+  /// Updates the accommodation application window setting. Admin only.
+  ///
+  /// PUT /api/v1/accommodation/settings
+  Future<Map<String, dynamic>> updateAccommodationSettings({
+    required bool open,
+  }) async {
+    final response = await _request<Map<String, dynamic>>(
+      () => _dio.put<Map<String, dynamic>>(
+        '/api/v1/accommodation/settings',
+        data: {'open': open},
+      ),
+    );
+    return response['data'] as Map<String, dynamic>;
+  }
+
+  /// Returns all accommodation blocks.
+  ///
+  /// GET /api/v1/accommodation/blocks
+  Future<List<Block>> listBlocks() async {
+    final response = await _request<Map<String, dynamic>>(
+      () => _dio.get<Map<String, dynamic>>('/api/v1/accommodation/blocks'),
+    );
+
+    return (response['data'] as List<dynamic>)
+        .map((e) => Block.fromJson(e as Map<String, dynamic>))
+        .toList();
+  }
+
+  /// Returns a paginated, filterable list of accommodation applications.
+  ///
+  /// GET /api/v1/accommodation/applications?status=&type=&tags=&page=&limit=
+  Future<Map<String, dynamic>> listApplications({
+    String? status,
+    String? type,
+    List<String>? tags,
+    int page = 1,
+    int limit = 20,
+  }) async {
+    final queryParams = <String, dynamic>{
+      'page': page,
+      'limit': limit,
+    };
+    if (status != null && status.isNotEmpty) queryParams['status'] = status;
+    if (type != null && type.isNotEmpty) queryParams['type'] = type;
+    if (tags != null && tags.isNotEmpty) queryParams['tags'] = tags.join(',');
+
+    final response = await _request<Map<String, dynamic>>(
+      () => _dio.get<Map<String, dynamic>>(
+        '/api/v1/accommodation/applications',
+        queryParameters: queryParams,
+      ),
+    );
+    return response;
+  }
+
+  /// Returns the student's own applications split into active and history.
+  ///
+  /// GET /api/v1/accommodation/my-applications
+  Future<MyApplicationsResponse> getMyApplications() async {
+    final response = await _request<Map<String, dynamic>>(
+      () => _dio.get<Map<String, dynamic>>(
+        '/api/v1/accommodation/my-applications',
+      ),
+    );
+
+    final data = response['data'] as Map<String, dynamic>;
+    final active = (data['active'] as List<dynamic>)
+        .map((e) => AccommodationApplication.fromJson(e as Map<String, dynamic>))
+        .toList();
+    final history = (data['history'] as List<dynamic>)
+        .map((e) => AccommodationApplication.fromJson(e as Map<String, dynamic>))
+        .toList();
+
+    return MyApplicationsResponse(active: active, history: history);
+  }
+
+  /// Submits a new accommodation application.
+  ///
+  /// POST /api/v1/accommodation/applications
+  Future<AccommodationApplication> submitAccommodationApplication({
+    required String applicationType,
+    String? roomTypePreference,
+    String? preferredBlockId,
+    List<String>? lifestyleTags,
+    DateTime? checkInDate,
+    DateTime? checkOutDate,
+  }) async {
+    final body = <String, dynamic>{
+      'application_type': applicationType,
+      if (roomTypePreference != null) 'room_type_preference': roomTypePreference,
+      if (preferredBlockId != null) 'preferred_block_id': preferredBlockId,
+      if (lifestyleTags != null) 'lifestyle_tags': lifestyleTags,
+      if (checkInDate != null)
+        'check_in_date': checkInDate.toIso8601String().split('T').first,
+      if (checkOutDate != null)
+        'check_out_date': checkOutDate.toIso8601String().split('T').first,
+    };
+
+    final response = await _request<Map<String, dynamic>>(
+      () => _dio.post<Map<String, dynamic>>(
+        '/api/v1/accommodation/applications',
+        data: body,
+      ),
+    );
+
+    return AccommodationApplication.fromJson(
+        response['data'] as Map<String, dynamic>);
+  }
+
+  /// Checks in an application by UUID.
+  ///
+  /// POST /api/v1/accommodation/check-in
+  Future<AccommodationApplication> checkIn({
+    required String applicationId,
+  }) async {
+    final response = await _request<Map<String, dynamic>>(
+      () => _dio.post<Map<String, dynamic>>(
+        '/api/v1/accommodation/check-in',
+        data: {'applicationId': applicationId},
+      ),
+    );
+    return AccommodationApplication.fromJson(
+        response['data'] as Map<String, dynamic>);
+  }
+
+  /// Checks out an application by UUID.
+  ///
+  /// POST /api/v1/accommodation/check-out
+  Future<AccommodationApplication> checkOut({
+    required String applicationId,
+  }) async {
+    final response = await _request<Map<String, dynamic>>(
+      () => _dio.post<Map<String, dynamic>>(
+        '/api/v1/accommodation/check-out',
+        data: {'applicationId': applicationId},
+      ),
+    );
+    return AccommodationApplication.fromJson(
+        response['data'] as Map<String, dynamic>);
+  }
+
+  /// Rejects an accommodation application with a reason. Admin only.
+  ///
+  /// POST /api/v1/accommodation/applications/:id/reject
+  Future<AccommodationApplication> rejectApplication(
+    String id, {
+    required String reason,
+  }) async {
+    final response = await _request<Map<String, dynamic>>(
+      () => _dio.post<Map<String, dynamic>>(
+        '/api/v1/accommodation/applications/$id/reject',
+        data: {'reason': reason},
+      ),
+    );
+    return AccommodationApplication.fromJson(
+        response['data'] as Map<String, dynamic>);
+  }
+
+  /// Returns occupancy data for a block (rooms with bed counts).
+  ///
+  /// GET /api/v1/accommodation/occupancy?blockId=...
+  Future<List<Room>> getOccupancy(String blockId) async {
+    final response = await _request<Map<String, dynamic>>(
+      () => _dio.get<Map<String, dynamic>>(
+        '/api/v1/accommodation/occupancy',
+        queryParameters: {'blockId': blockId},
+      ),
+    );
+
+    return (response['data'] as List<dynamic>)
+        .map((e) => Room.fromJson(e as Map<String, dynamic>))
+        .toList();
+  }
+
+  /// Returns rooms filtered by block (and optionally by room type).
+  ///
+  /// GET /api/v1/accommodation/rooms?blockId=...&roomType=...
+  Future<List<Room>> listRooms({
+    required String blockId,
+    String? roomType,
+  }) async {
+    final queryParams = <String, dynamic>{'blockId': blockId};
+    if (roomType != null) queryParams['roomType'] = roomType;
+
+    final response = await _request<Map<String, dynamic>>(
+      () => _dio.get<Map<String, dynamic>>(
+        '/api/v1/accommodation/rooms',
+        queryParameters: queryParams,
+      ),
+    );
+
+    return (response['data'] as List<dynamic>)
+        .map((e) => Room.fromJson(e as Map<String, dynamic>))
+        .toList();
+  }
+
+  /// Returns beds filtered by room.
+  ///
+  /// GET /api/v1/accommodation/beds?roomId=...
+  Future<List<Bed>> listBeds({required String roomId}) async {
+    final response = await _request<Map<String, dynamic>>(
+      () => _dio.get<Map<String, dynamic>>(
+        '/api/v1/accommodation/beds',
+        queryParameters: {'roomId': roomId},
+      ),
+    );
+
+    return (response['data'] as List<dynamic>)
+        .map((e) => Bed.fromJson(e as Map<String, dynamic>))
+        .toList();
+  }
+
+  /// Approves an application with a specific bed assignment.
+  ///
+  /// POST /api/v1/accommodation/applications/:id/approve
+  Future<AccommodationApplication> approveApplication(
+    String id, {
+    required String bedId,
+  }) async {
+    final response = await _request<Map<String, dynamic>>(
+      () => _dio.post<Map<String, dynamic>>(
+        '/api/v1/accommodation/applications/$id/approve',
+        data: {'bedId': bedId},
+      ),
+    );
+
+    return AccommodationApplication.fromJson(
+        response['data'] as Map<String, dynamic>);
+  }
+
+  // ---------------------------------------------------------------------------
   // Images
   // ---------------------------------------------------------------------------
 
@@ -310,6 +562,7 @@ class MyKizApiClient {
         403 => ForbiddenException(code: code, message: message),
         404 => NotFoundException(code: code, message: message),
         400 => ValidationException(code: code, message: message),
+        409 => ConflictException(code: code, message: message),
         500 => ServerException(code: code, message: message),
         _ => ServerException(code: code, message: message),
       };

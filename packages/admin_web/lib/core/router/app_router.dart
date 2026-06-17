@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../features/accommodation/presentation/accommodation_shell.dart';
 import '../../features/announcements/presentation/announcement_detail_screen.dart';
 import '../../features/announcements/presentation/announcement_form_screen.dart';
 import '../../features/announcements/presentation/announcements_screen.dart';
@@ -18,6 +19,7 @@ abstract final class AppRoutes {
   static const String announcementCreate = '/announcements/create';
   static const String complaints = '/complaints';
   static const String complaintDetail = '/complaints/:id';
+  static const String accommodation = '/accommodation';
 
   /// Returns the path for viewing a single announcement.
   static String announcementDetail(String id) => '/announcements/$id';
@@ -90,6 +92,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.complaints,
         builder: (context, state) => const ComplaintsScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.accommodation,
+        builder: (context, state) => const AccommodationShell(),
       ),
       GoRoute(
         path: AppRoutes.complaintDetail,

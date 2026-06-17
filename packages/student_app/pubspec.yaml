@@ -19,6 +19,7 @@ dependencies:
   go_router: ^13.0.0
   google_fonts: ^6.1.0
   image_picker: ^1.0.7
+  qr_flutter: ^4.1.0
 
 dev_dependencies:
   flutter_test:

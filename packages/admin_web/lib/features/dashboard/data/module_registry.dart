@@ -15,4 +15,9 @@ const List<ModuleEntry> moduleRegistry = [
     icon: Icons.report_problem,
     route: '/complaints',
   ),
+  ModuleEntry(
+    name: 'Accommodation',
+    icon: Icons.hotel,
+    route: '/accommodation',
+  ),
 ];

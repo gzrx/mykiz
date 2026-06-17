@@ -14,6 +14,8 @@ import 'package:student_app/features/dashboard/application/dashboard_providers.d
 
 const _statuses = ['submitted', 'in_progress', 'resolved'];
 
+const _accommodationStatuses = ['submitted', 'approved', 'checked_in'];
+
 String _randomStatus(Random rng) => _statuses[rng.nextInt(_statuses.length)];
 
 List<String> _randomNonEmptyStatusList(Random rng) {
@@ -107,6 +109,52 @@ void main() {
         final result = mostRecentComplaintStatus(statuses);
         expect(statuses.contains(result), isTrue,
             reason: 'Result "$result" must be in the input list');
+      }
+    });
+  });
+
+  // -- Property 12: Accommodation dashboard badge priority --
+  // **Validates: Requirements 8.4, 8.5**
+  group('Property 12: Accommodation badge priority', () {
+    test('empty list returns null (no badge)', () {
+      expect(accommodationBadgeText([]), isNull);
+    });
+
+    test('list with checked_in always returns "Checked In"', () {
+      for (var i = 0; i < 100; i++) {
+        final others = List.generate(
+          random.nextInt(5),
+          (_) => _accommodationStatuses[random.nextInt(3)],
+        );
+        final statuses = [...others, 'checked_in']..shuffle(random);
+        expect(accommodationBadgeText(statuses), 'Checked In',
+            reason: 'checked_in is highest priority');
+      }
+    });
+
+    test(
+        'list with approved but no checked_in always returns "Approved"', () {
+      for (var i = 0; i < 100; i++) {
+        final count = 1 + random.nextInt(5);
+        final statuses = List.generate(
+          count,
+          (_) => random.nextBool() ? 'approved' : 'submitted',
+        );
+        // Ensure at least one approved and no checked_in
+        if (!statuses.contains('approved')) statuses[0] = 'approved';
+        statuses.removeWhere((s) => s == 'checked_in');
+        if (statuses.isEmpty) statuses.add('approved');
+        expect(accommodationBadgeText(statuses), 'Approved',
+            reason: 'approved is second priority');
+      }
+    });
+
+    test('list with only submitted returns "Submitted"', () {
+      for (var i = 0; i < 100; i++) {
+        final count = 1 + random.nextInt(5);
+        final statuses = List.filled(count, 'submitted');
+        expect(accommodationBadgeText(statuses), 'Submitted',
+            reason: 'submitted-only should return "Submitted"');
       }
     });
   });

@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../accommodation/application/accommodation_provider.dart';
 import '../../announcements/application/announcements_provider.dart';
 import '../../complaints/application/complaints_provider.dart';
 
@@ -38,4 +39,27 @@ Future<String?> complaintsBadgeProvider(WidgetRef ref) async {
   } catch (_) {
     return null;
   }
+}
+
+/// Returns the highest-priority active accommodation application status.
+/// Priority: checked_in > approved > submitted. Null if no active apps.
+Future<String?> accommodationBadgeProvider(WidgetRef ref) async {
+  try {
+    final appsAsync = ref.read(myAccommodationAppsProvider);
+    final apps = appsAsync.valueOrNull;
+    if (apps == null) return null;
+    final statuses = apps.active.map((a) => a.status).toList();
+    return accommodationBadgeText(statuses);
+  } catch (_) {
+    return null;
+  }
+}
+
+/// Pure badge logic for accommodation tile.
+/// ponytail: priority list avoids nested ifs, easy to extend.
+String? accommodationBadgeText(List<String> activeStatuses) {
+  if (activeStatuses.isEmpty) return null;
+  if (activeStatuses.contains('checked_in')) return 'Checked In';
+  if (activeStatuses.contains('approved')) return 'Approved';
+  return 'Submitted';
 }

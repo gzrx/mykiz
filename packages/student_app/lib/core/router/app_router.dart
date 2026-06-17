@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../features/auth/application/auth_provider.dart';
 import '../../features/auth/presentation/login_screen.dart';
+import '../../features/accommodation/presentation/accommodation_screen.dart';
 import '../../features/complaints/presentation/complaint_detail_screen.dart';
 import '../../features/complaints/presentation/complaint_submit_screen.dart';
 import '../../features/complaints/presentation/complaints_list_screen.dart';
@@ -18,6 +19,7 @@ abstract final class AppRoutes {
   static const String complaints = '/complaints';
   static const String complaintDetail = '/complaints/:id';
   static const String complaintSubmit = '/complaints/new';
+  static const String accommodation = '/accommodation';
 }
 
 /// Pure function implementing the router redirect truth table.
@@ -56,6 +58,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.announcements,
         builder: (context, state) => const AnnouncementsListScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.accommodation,
+        builder: (context, state) => const AccommodationScreen(),
       ),
       GoRoute(
         path: AppRoutes.complaints,

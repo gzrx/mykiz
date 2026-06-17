@@ -146,8 +146,8 @@ void main() {
       final gridFinder = find.byType(GridView);
       expect(gridFinder, findsOneWidget);
 
-      // Verify both tiles are rendered (2 valid entries fit in 2 columns)
-      expect(find.byType(ModuleTile), findsNWidgets(2));
+      // Verify all tiles are rendered (3 modules: complaints, announcements, accommodation)
+      expect(find.byType(ModuleTile), findsNWidgets(3));
     });
 
     testWidgets('shows 3 columns at 400dp width', (tester) async {
@@ -163,7 +163,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byType(GridView), findsOneWidget);
-      expect(find.byType(ModuleTile), findsNWidgets(2));
+      expect(find.byType(ModuleTile), findsNWidgets(3));
     });
 
     testWidgets('shows 3 columns at 600dp width (floor(600/120)=5, but spec says >=600 → max(4, floor))',
@@ -180,7 +180,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byType(GridView), findsOneWidget);
-      expect(find.byType(ModuleTile), findsNWidgets(2));
+      expect(find.byType(ModuleTile), findsNWidgets(3));
     });
 
     testWidgets('shows tiles at 800dp width', (tester) async {
@@ -196,7 +196,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byType(GridView), findsOneWidget);
-      expect(find.byType(ModuleTile), findsNWidgets(2));
+      expect(find.byType(ModuleTile), findsNWidgets(3));
     });
   });
 

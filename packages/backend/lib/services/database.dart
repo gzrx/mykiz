@@ -60,6 +60,30 @@ class Database {
     }
   }
 
+  /// Runs a callback inside a database transaction.
+  /// The callback receives a [TxSession] that must be used for all queries
+  /// within the transaction.
+  static Future<T> transaction<T>(
+    Future<T> Function(TxSession session) callback,
+  ) async {
+    final connection = await Connection.open(
+      Endpoint(
+        host: Platform.environment['DB_HOST'] ?? 'localhost',
+        port: int.parse(Platform.environment['DB_PORT'] ?? '5432'),
+        database: Platform.environment['DB_NAME'] ?? 'mykiz',
+        username: Platform.environment['DB_USER'] ?? 'mykiz',
+        password: Platform.environment['DB_PASSWORD'] ?? 'mykiz_secret',
+      ),
+      settings: ConnectionSettings(sslMode: SslMode.disable),
+    );
+
+    try {
+      return await connection.runTx(callback);
+    } finally {
+      await connection.close();
+    }
+  }
+
   /// Closes the connection pool.
   static Future<void> close() async {
     await _pool?.close();

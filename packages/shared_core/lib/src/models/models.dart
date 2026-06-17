@@ -1,5 +1,11 @@
+export 'accommodation_application.dart';
+export 'accommodation_status.dart';
 export 'announcement.dart';
 export 'api_response.dart';
+export 'bed.dart';
+export 'block.dart';
 export 'complaint.dart';
 export 'complaint_status.dart';
+export 'lifestyle_tag.dart';
+export 'room.dart';
 export 'user.dart';
