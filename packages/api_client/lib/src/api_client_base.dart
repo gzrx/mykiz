@@ -502,6 +502,360 @@ class MyKizApiClient {
   }
 
   // ---------------------------------------------------------------------------
+  // Bookings
+  // ---------------------------------------------------------------------------
+
+  /// Returns a list of active facilities.
+  ///
+  /// GET /api/v1/facilities
+  Future<List<Facility>> listFacilities() async {
+    final response = await _request<Map<String, dynamic>>(
+      () => _dio.get<Map<String, dynamic>>('/api/v1/facilities'),
+    );
+    return (response['data'] as List<dynamic>)
+        .map((e) => Facility.fromJson(e as Map<String, dynamic>))
+        .toList();
+  }
+
+  /// Returns slot configs for a facility.
+  ///
+  /// GET /api/v1/facilities/:id/slots
+  Future<List<FacilitySlotConfig>> getFacilitySlots(String facilityId) async {
+    final response = await _request<Map<String, dynamic>>(
+      () => _dio.get<Map<String, dynamic>>(
+        '/api/v1/facilities/$facilityId/slots',
+      ),
+    );
+    return (response['data'] as List<dynamic>)
+        .map((e) => FacilitySlotConfig.fromJson(e as Map<String, dynamic>))
+        .toList();
+  }
+
+  /// Returns slot availability for a facility on a specific date.
+  ///
+  /// GET /api/v1/facilities/:id/availability?date=YYYY-MM-DD
+  Future<List<Map<String, dynamic>>> getSlotAvailability(
+    String facilityId, {
+    required String date,
+  }) async {
+    final response = await _request<Map<String, dynamic>>(
+      () => _dio.get<Map<String, dynamic>>(
+        '/api/v1/facilities/$facilityId/availability',
+        queryParameters: {'date': date},
+      ),
+    );
+    return (response['data'] as List<dynamic>)
+        .map((e) => e as Map<String, dynamic>)
+        .toList();
+  }
+
+  /// Returns a paginated list of the student's bookings.
+  ///
+  /// GET /api/v1/bookings?type=active|history&page=&limit=
+  Future<PaginatedResponse<Booking>> listBookings({
+    String type = 'active',
+    int page = 1,
+    int limit = 20,
+  }) async {
+    final response = await _request<Map<String, dynamic>>(
+      () => _dio.get<Map<String, dynamic>>(
+        '/api/v1/bookings',
+        queryParameters: {'type': type, 'page': page, 'limit': limit},
+      ),
+    );
+    final items = (response['data'] as List<dynamic>)
+        .map((e) => Booking.fromJson(e as Map<String, dynamic>))
+        .toList();
+    final meta =
+        PaginationMeta.fromJson(response['meta'] as Map<String, dynamic>);
+    return PaginatedResponse(items: items, meta: meta);
+  }
+
+  /// Submits a new booking.
+  ///
+  /// POST /api/v1/bookings
+  Future<Booking> submitBooking({
+    required String facilityId,
+    required String slotConfigId,
+    required String date,
+  }) async {
+    final response = await _request<Map<String, dynamic>>(
+      () => _dio.post<Map<String, dynamic>>(
+        '/api/v1/bookings',
+        data: {
+          'facilityId': facilityId,
+          'slotConfigId': slotConfigId,
+          'date': date,
+        },
+      ),
+    );
+    return Booking.fromJson(response['data'] as Map<String, dynamic>);
+  }
+
+  /// Cancels a booking.
+  ///
+  /// DELETE /api/v1/bookings/:id
+  Future<void> cancelBooking(String id) async {
+    await _request<Map<String, dynamic>>(
+      () => _dio.delete<Map<String, dynamic>>('/api/v1/bookings/$id'),
+    );
+  }
+
+  /// QR check-in for a booking.
+  ///
+  /// POST /api/v1/bookings/check-in
+  Future<Booking> checkInBooking({
+    required String facilityId,
+    required String slotConfigId,
+    required String date,
+  }) async {
+    final response = await _request<Map<String, dynamic>>(
+      () => _dio.post<Map<String, dynamic>>(
+        '/api/v1/bookings/check-in',
+        data: {
+          'facilityId': facilityId,
+          'slotConfigId': slotConfigId,
+          'date': date,
+        },
+      ),
+    );
+    return Booking.fromJson(response['data'] as Map<String, dynamic>);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Bookings (Admin)
+  // ---------------------------------------------------------------------------
+
+  /// Returns all bookings (admin), filterable.
+  ///
+  /// GET /api/v1/admin/bookings
+  Future<PaginatedResponse<Booking>> listAllBookings({
+    String? facility,
+    String? status,
+    String? from,
+    String? to,
+    int page = 1,
+    int limit = 20,
+  }) async {
+    final queryParams = <String, dynamic>{'page': page, 'limit': limit};
+    if (facility != null) queryParams['facility'] = facility;
+    if (status != null) queryParams['status'] = status;
+    if (from != null) queryParams['from'] = from;
+    if (to != null) queryParams['to'] = to;
+
+    final response = await _request<Map<String, dynamic>>(
+      () => _dio.get<Map<String, dynamic>>(
+        '/api/v1/admin/bookings',
+        queryParameters: queryParams,
+      ),
+    );
+    final items = (response['data'] as List<dynamic>)
+        .map((e) => Booking.fromJson(e as Map<String, dynamic>))
+        .toList();
+    final meta =
+        PaginationMeta.fromJson(response['meta'] as Map<String, dynamic>);
+    return PaginatedResponse(items: items, meta: meta);
+  }
+
+  /// Approves a pending booking.
+  ///
+  /// PUT /api/v1/admin/bookings/:id/approve
+  Future<Booking> approveBooking(String id) async {
+    final response = await _request<Map<String, dynamic>>(
+      () => _dio.put<Map<String, dynamic>>(
+        '/api/v1/admin/bookings/$id/approve',
+      ),
+    );
+    return Booking.fromJson(response['data'] as Map<String, dynamic>);
+  }
+
+  /// Rejects a pending booking with a reason.
+  ///
+  /// PUT /api/v1/admin/bookings/:id/reject
+  Future<Booking> rejectBooking(String id, {required String reason}) async {
+    final response = await _request<Map<String, dynamic>>(
+      () => _dio.put<Map<String, dynamic>>(
+        '/api/v1/admin/bookings/$id/reject',
+        data: {'reason': reason},
+      ),
+    );
+    return Booking.fromJson(response['data'] as Map<String, dynamic>);
+  }
+
+  /// Creates a booking on behalf of a student (admin).
+  ///
+  /// POST /api/v1/admin/bookings
+  Future<Booking> createManualBooking({
+    required String facilityId,
+    required String slotConfigId,
+    required String date,
+    required String studentId,
+  }) async {
+    final response = await _request<Map<String, dynamic>>(
+      () => _dio.post<Map<String, dynamic>>(
+        '/api/v1/admin/bookings',
+        data: {
+          'facilityId': facilityId,
+          'slotConfigId': slotConfigId,
+          'date': date,
+          'studentId': studentId,
+        },
+      ),
+    );
+    return Booking.fromJson(response['data'] as Map<String, dynamic>);
+  }
+
+  /// Updates facility settings.
+  ///
+  /// PUT /api/v1/facilities/:id
+  Future<Facility> updateFacility(
+    String id, {
+    bool? isActive,
+    String? approvalMode,
+    int? graceBeforeMinutes,
+    int? graceAfterMinutes,
+  }) async {
+    final data = <String, dynamic>{};
+    if (isActive != null) data['isActive'] = isActive;
+    if (approvalMode != null) data['approvalMode'] = approvalMode;
+    if (graceBeforeMinutes != null) {
+      data['graceBeforeMinutes'] = graceBeforeMinutes;
+    }
+    if (graceAfterMinutes != null) {
+      data['graceAfterMinutes'] = graceAfterMinutes;
+    }
+
+    final response = await _request<Map<String, dynamic>>(
+      () => _dio.put<Map<String, dynamic>>(
+        '/api/v1/facilities/$id',
+        data: data,
+      ),
+    );
+    return Facility.fromJson(response['data'] as Map<String, dynamic>);
+  }
+
+  /// Adds a slot config to a facility.
+  ///
+  /// POST /api/v1/facilities/:id/slots
+  Future<FacilitySlotConfig> addSlotConfig(
+    String facilityId, {
+    required String startTime,
+    required String endTime,
+  }) async {
+    final response = await _request<Map<String, dynamic>>(
+      () => _dio.post<Map<String, dynamic>>(
+        '/api/v1/facilities/$facilityId/slots',
+        data: {'startTime': startTime, 'endTime': endTime},
+      ),
+    );
+    return FacilitySlotConfig.fromJson(
+        response['data'] as Map<String, dynamic>);
+  }
+
+  /// Deactivates/deletes a slot config.
+  ///
+  /// DELETE /api/v1/facilities/:id/slots/:slotId
+  Future<void> deleteSlotConfig(String facilityId, String slotId) async {
+    await _request<Map<String, dynamic>>(
+      () => _dio.delete<Map<String, dynamic>>(
+        '/api/v1/facilities/$facilityId/slots/$slotId',
+      ),
+    );
+  }
+
+  /// Blocks a date-slot combination.
+  ///
+  /// POST /api/v1/facilities/:id/slots/:slotId/block
+  Future<BlockedSlot> blockSlot(
+    String facilityId,
+    String slotId, {
+    required String date,
+    String? reason,
+  }) async {
+    final data = <String, dynamic>{'date': date};
+    if (reason != null) data['reason'] = reason;
+
+    final response = await _request<Map<String, dynamic>>(
+      () => _dio.post<Map<String, dynamic>>(
+        '/api/v1/facilities/$facilityId/slots/$slotId/block',
+        data: data,
+      ),
+    );
+    return BlockedSlot.fromJson(response['data'] as Map<String, dynamic>);
+  }
+
+  /// Unblocks a blocked slot.
+  ///
+  /// DELETE /api/v1/facilities/:id/blocked-slots/:blockId
+  Future<void> unblockSlot(String facilityId, String blockId) async {
+    await _request<Map<String, dynamic>>(
+      () => _dio.delete<Map<String, dynamic>>(
+        '/api/v1/facilities/$facilityId/blocked-slots/$blockId',
+      ),
+    );
+  }
+
+  /// Returns booking summary for a date range.
+  ///
+  /// GET /api/v1/admin/bookings/summary
+  Future<Map<String, dynamic>> getBookingSummary({
+    required String from,
+    required String to,
+  }) async {
+    final response = await _request<Map<String, dynamic>>(
+      () => _dio.get<Map<String, dynamic>>(
+        '/api/v1/admin/bookings/summary',
+        queryParameters: {'from': from, 'to': to},
+      ),
+    );
+    return response['data'] as Map<String, dynamic>;
+  }
+
+  /// Returns daily utilization data.
+  ///
+  /// GET /api/v1/admin/bookings/utilization
+  Future<List<Map<String, dynamic>>> getDailyUtilization({
+    required String date,
+  }) async {
+    final response = await _request<Map<String, dynamic>>(
+      () => _dio.get<Map<String, dynamic>>(
+        '/api/v1/admin/bookings/utilization',
+        queryParameters: {'date': date},
+      ),
+    );
+    return (response['data'] as List<dynamic>)
+        .map((e) => e as Map<String, dynamic>)
+        .toList();
+  }
+
+  /// Returns the export URL for bookings CSV.
+  ///
+  /// GET /api/v1/admin/bookings/export
+  Future<Uint8List> exportBookingsCsv({
+    String? facility,
+    String? status,
+    String? from,
+    String? to,
+  }) async {
+    final queryParams = <String, dynamic>{};
+    if (facility != null) queryParams['facility'] = facility;
+    if (status != null) queryParams['status'] = status;
+    if (from != null) queryParams['from'] = from;
+    if (to != null) queryParams['to'] = to;
+
+    try {
+      final response = await _dio.get<List<int>>(
+        '/api/v1/admin/bookings/export',
+        queryParameters: queryParams,
+        options: Options(responseType: ResponseType.bytes),
+      );
+      return Uint8List.fromList(response.data!);
+    } on DioException catch (e) {
+      throw _mapDioException(e);
+    }
+  }
+
+  // ---------------------------------------------------------------------------
   // Images
   // ---------------------------------------------------------------------------
 

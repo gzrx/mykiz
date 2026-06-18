@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../application/dashboard_providers.dart';
+import '../../bookings/application/bookings_provider.dart';
 
 /// A single module entry on the dashboard grid.
 class ModuleRegistryEntry {
@@ -54,5 +55,11 @@ final List<ModuleRegistryEntry> moduleRegistry = dedupRegistry([
     icon: Icons.hotel_outlined,
     routePath: '/accommodation',
     badgeProvider: accommodationBadgeProvider,
+  ),
+  ModuleRegistryEntry(
+    label: 'Bookings',
+    icon: Icons.calendar_month_outlined,
+    routePath: '/bookings',
+    badgeProvider: bookingsBadgeProvider,
   ),
 ]);

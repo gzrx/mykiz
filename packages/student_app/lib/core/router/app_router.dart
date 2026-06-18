@@ -5,6 +5,9 @@ import 'package:go_router/go_router.dart';
 import '../../features/auth/application/auth_provider.dart';
 import '../../features/auth/presentation/login_screen.dart';
 import '../../features/accommodation/presentation/accommodation_screen.dart';
+import '../../features/bookings/presentation/booking_detail_screen.dart';
+import '../../features/bookings/presentation/bookings_screen.dart';
+import '../../features/bookings/presentation/facility_availability_screen.dart';
 import '../../features/complaints/presentation/complaint_detail_screen.dart';
 import '../../features/complaints/presentation/complaint_submit_screen.dart';
 import '../../features/complaints/presentation/complaints_list_screen.dart';
@@ -20,6 +23,7 @@ abstract final class AppRoutes {
   static const String complaintDetail = '/complaints/:id';
   static const String complaintSubmit = '/complaints/new';
   static const String accommodation = '/accommodation';
+  static const String bookings = '/bookings';
 }
 
 /// Pure function implementing the router redirect truth table.
@@ -62,6 +66,26 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.accommodation,
         builder: (context, state) => const AccommodationScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.bookings,
+        builder: (context, state) => const BookingsScreen(),
+        routes: [
+          GoRoute(
+            path: 'facility/:id',
+            builder: (context, state) {
+              final id = state.pathParameters['id']!;
+              return FacilityAvailabilityScreen(facilityId: id);
+            },
+          ),
+          GoRoute(
+            path: ':id',
+            builder: (context, state) {
+              final id = state.pathParameters['id']!;
+              return BookingDetailScreen(bookingId: id);
+            },
+          ),
+        ],
       ),
       GoRoute(
         path: AppRoutes.complaints,

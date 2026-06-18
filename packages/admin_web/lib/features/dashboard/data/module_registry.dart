@@ -20,4 +20,9 @@ const List<ModuleEntry> moduleRegistry = [
     icon: Icons.hotel,
     route: '/accommodation',
   ),
+  ModuleEntry(
+    name: 'Bookings',
+    icon: Icons.calendar_month,
+    route: '/bookings',
+  ),
 ];
