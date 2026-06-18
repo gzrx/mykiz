@@ -5,7 +5,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 ///
 /// Override this in tests or configure with the actual base URL.
 final apiClientProvider = Provider<MyKizApiClient>((ref) {
-  return MyKizApiClient(baseUrl: '');
+  return MyKizApiClient(
+    baseUrl: const String.fromEnvironment(
+      'API_BASE_URL',
+      defaultValue: 'https://app.isaacfurqan.me',
+    ),
+  );
 });
 
 /// Repository that handles authentication API calls.
