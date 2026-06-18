@@ -86,7 +86,8 @@ class AccommodationRepository {
       limit: limit,
     );
     final data = response['data'] as List<dynamic>? ?? [];
-    final total = response['total'] as int? ?? data.length;
+    final meta = response['meta'] as Map<String, dynamic>?;
+    final total = meta?['totalItems'] as int? ?? data.length;
     final items = data
         .map((e) =>
             AccommodationApplication.fromJson(e as Map<String, dynamic>))

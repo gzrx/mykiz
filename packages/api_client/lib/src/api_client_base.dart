@@ -359,14 +359,14 @@ class MyKizApiClient {
     DateTime? checkOutDate,
   }) async {
     final body = <String, dynamic>{
-      'application_type': applicationType,
-      if (roomTypePreference != null) 'room_type_preference': roomTypePreference,
-      if (preferredBlockId != null) 'preferred_block_id': preferredBlockId,
-      if (lifestyleTags != null) 'lifestyle_tags': lifestyleTags,
+      'applicationType': applicationType,
+      if (roomTypePreference != null) 'roomTypePreference': roomTypePreference,
+      if (preferredBlockId != null) 'preferredBlockId': preferredBlockId,
+      if (lifestyleTags != null) 'lifestyleTags': lifestyleTags,
       if (checkInDate != null)
-        'check_in_date': checkInDate.toIso8601String().split('T').first,
+        'checkInDate': checkInDate.toIso8601String().split('T').first,
       if (checkOutDate != null)
-        'check_out_date': checkOutDate.toIso8601String().split('T').first,
+        'checkOutDate': checkOutDate.toIso8601String().split('T').first,
     };
 
     final response = await _request<Map<String, dynamic>>(
