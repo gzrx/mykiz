@@ -8,6 +8,7 @@ import 'package:shared_core/shared_core.dart';
 import 'package:admin_web/core/router/app_router.dart';
 import 'package:admin_web/features/auth/application/auth_provider.dart';
 import 'package:admin_web/features/auth/data/auth_repository.dart';
+import 'package:admin_web/features/auth/data/auth_storage.dart';
 
 /// Fake repository that always succeeds login.
 class FakeAuthRepository extends AuthRepository {
@@ -31,6 +32,19 @@ class FakeAuthRepository extends AuthRepository {
   }
 }
 
+/// Fake [AuthStorage] that never has a persisted session, so `bootstrap()`
+/// resolves straight to `unauthenticated` in tests.
+class FakeAuthStorage extends AuthStorage {
+  @override
+  Future<void> save(String token, User user) async {}
+
+  @override
+  Future<({String token, User user})?> read() async => null;
+
+  @override
+  Future<void> clear() async {}
+}
+
 /// Creates a [ProviderContainer] with standard test overrides.
 ProviderContainer _container() => ProviderContainer(
       overrides: [
@@ -38,6 +52,7 @@ ProviderContainer _container() => ProviderContainer(
         apiClientProvider.overrideWithValue(
           MyKizApiClient(baseUrl: 'http://test'),
         ),
+        authStorageProvider.overrideWithValue(FakeAuthStorage()),
       ],
     );
 
@@ -64,7 +79,10 @@ void main() {
       final container = _container();
       addTearDown(container.dispose);
 
-      // Auth state is unauthenticated by default.
+      // Resolve the initial `unknown` status to `unauthenticated` (no
+      // persisted session), mirroring what happens at real app startup.
+      await container.read(authProvider.notifier).bootstrap();
+
       // Router initial location is /login, but redirect logic should guard
       // /dashboard → /login for unauthenticated users. Verify via router
       // redirect function directly.

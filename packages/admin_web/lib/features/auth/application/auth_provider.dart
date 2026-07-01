@@ -3,9 +3,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_core/shared_core.dart';
 
 import '../data/auth_repository.dart';
+import '../data/auth_storage.dart';
 
 /// Authentication state enum.
 enum AuthStatus {
+  /// Auth state has not yet been determined (bootstrap in progress).
+  unknown,
+
   /// User is not authenticated.
   unauthenticated,
 
@@ -19,7 +23,7 @@ enum AuthStatus {
 /// Holds the current authentication state including token and user.
 class AuthState {
   const AuthState({
-    this.status = AuthStatus.unauthenticated,
+    this.status = AuthStatus.unknown,
     this.token,
     this.user,
     this.errorMessage,
@@ -53,10 +57,12 @@ class AuthState {
 /// Handles login, logout, token storage (in-memory for PoC),
 /// and auth state transitions.
 class AuthNotifier extends StateNotifier<AuthState> {
-  AuthNotifier(this._repository, this._apiClient) : super(const AuthState());
+  AuthNotifier(this._repository, this._apiClient, this._storage)
+      : super(const AuthState());
 
   final AuthRepository _repository;
   final MyKizApiClient _apiClient;
+  final AuthStorage _storage;
 
   /// Attempts to log in with the given [identifier] and [password].
   ///
@@ -76,6 +82,9 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
       // Store token in the API client for subsequent requests
       _apiClient.setToken(response.token);
+
+      // Persist the session so it survives a browser reload.
+      await _storage.save(response.token, response.user);
 
       state = AuthState(
         status: AuthStatus.authenticated,
@@ -106,9 +115,29 @@ class AuthNotifier extends StateNotifier<AuthState> {
   }
 
   /// Logs out the current user and clears stored credentials.
-  void logout() {
+  Future<void> logout() async {
+    await _storage.clear();
     _apiClient.clearToken();
-    state = const AuthState();
+    state = const AuthState(status: AuthStatus.unauthenticated);
+  }
+
+  /// Restores a persisted session (if any) on app startup.
+  ///
+  /// Resolves the initial [AuthStatus.unknown] state to either
+  /// [AuthStatus.authenticated] (with the token applied to the API client)
+  /// or [AuthStatus.unauthenticated] when no session was persisted.
+  Future<void> bootstrap() async {
+    final saved = await _storage.read();
+    if (saved == null) {
+      state = const AuthState(status: AuthStatus.unauthenticated);
+      return;
+    }
+    _apiClient.setToken(saved.token);
+    state = AuthState(
+      status: AuthStatus.authenticated,
+      token: saved.token,
+      user: saved.user,
+    );
   }
 }
 
@@ -116,5 +145,6 @@ class AuthNotifier extends StateNotifier<AuthState> {
 final authProvider = StateNotifierProvider<AuthNotifier, AuthState>((ref) {
   final repository = ref.watch(authRepositoryProvider);
   final apiClient = ref.watch(apiClientProvider);
-  return AuthNotifier(repository, apiClient);
+  final storage = ref.watch(authStorageProvider);
+  return AuthNotifier(repository, apiClient, storage);
 });

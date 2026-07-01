@@ -44,7 +44,15 @@ final appRouterProvider = Provider<GoRouter>((ref) {
   return GoRouter(
     initialLocation: AppRoutes.login,
     redirect: (context, state) {
-      final isAuthenticated = authState.isAuthenticated;
+      final status = authState.status;
+
+      // Auth state hasn't resolved yet (bootstrap in progress); stay put
+      // while the app shows a splash screen.
+      if (status == AuthStatus.unknown) {
+        return null;
+      }
+
+      final isAuthenticated = status == AuthStatus.authenticated;
       final isOnLogin = state.matchedLocation == AppRoutes.login;
 
       // If not authenticated and not on login page, redirect to login
@@ -54,6 +62,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
 
       // If authenticated and on login or root, redirect to dashboard
       if (isAuthenticated && (isOnLogin || state.matchedLocation == '/')) {
+        // TODO(B4): switch to AppRoutes.overview once the sidebar shell lands.
         return AppRoutes.dashboard;
       }
 
