@@ -38,8 +38,14 @@ class MyKizApiClient {
   /// Creates an API client configured with the given [baseUrl].
   ///
   /// Optionally accepts a pre-configured [Dio] instance for testing.
-  MyKizApiClient({required String baseUrl, Dio? dio})
-      : _dio = dio ??
+  ///
+  /// [onUnauthorized], if provided, is invoked whenever a request maps to
+  /// a 401 [UnauthorizedException], before the exception propagates.
+  MyKizApiClient({
+    required String baseUrl,
+    Dio? dio,
+    void Function()? onUnauthorized,
+  })  : _dio = dio ??
             Dio(
               BaseOptions(
                 baseUrl: baseUrl,
@@ -48,9 +54,11 @@ class MyKizApiClient {
                 sendTimeout: const Duration(seconds: 30),
                 contentType: 'application/json',
               ),
-            );
+            ),
+        _onUnauthorized = onUnauthorized;
 
   final Dio _dio;
+  final void Function()? _onUnauthorized;
 
   /// Sets the Bearer token for authenticated requests.
   void setToken(String token) {
@@ -925,7 +933,10 @@ class MyKizApiClient {
       }
 
       return switch (response.statusCode) {
-        401 => UnauthorizedException(code: code, message: message),
+        401 => () {
+            _onUnauthorized?.call();
+            return UnauthorizedException(code: code, message: message);
+          }(),
         403 => ForbiddenException(code: code, message: message),
         404 => NotFoundException(code: code, message: message),
         400 => ValidationException(code: code, message: message),
