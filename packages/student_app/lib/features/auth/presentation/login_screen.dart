@@ -21,6 +21,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
 
+  static const _demoAccounts = <({String id, String name})>[
+    (id: 'A123456', name: 'Ahmad'),
+    (id: 'A234567', name: 'Siti'),
+    (id: 'A345678', name: 'Farah'),
+  ];
+
   @override
   void dispose() {
     _matricController.dispose();
@@ -35,6 +41,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           identifier: _matricController.text.trim(),
           password: _passwordController.text,
         );
+  }
+
+  void _fillDemo(String id) {
+    _matricController.text = id;
+    _passwordController.text = 'password123';
   }
 
   @override
@@ -98,6 +109,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
                   // Matric Number field
                   TextFormField(
+                    key: const Key('matricField'),
                     controller: _matricController,
                     enabled: !isLoading,
                     decoration: const InputDecoration(
@@ -116,6 +128,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
                   // Password field
                   TextFormField(
+                    key: const Key('passwordField'),
                     controller: _passwordController,
                     enabled: !isLoading,
                     obscureText: _obscurePassword,
@@ -161,6 +174,28 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               ),
                             )
                           : const Text('Login'),
+                    ),
+                  ),
+                  const SizedBox(height: KizSpacing.sm),
+                  Center(
+                    child: PopupMenuButton<String>(
+                      tooltip: 'Fill demo credentials',
+                      onSelected: _fillDemo,
+                      itemBuilder: (context) => [
+                        for (final a in _demoAccounts)
+                          PopupMenuItem(
+                            value: a.id,
+                            child: Text('${a.id} — ${a.name}'),
+                          ),
+                      ],
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.science_outlined, size: 16),
+                          SizedBox(width: 4),
+                          Text('Demo'),
+                        ],
+                      ),
                     ),
                   ),
                 ],
