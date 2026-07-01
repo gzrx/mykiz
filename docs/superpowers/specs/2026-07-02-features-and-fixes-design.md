@@ -9,8 +9,9 @@ Batch of features + bug fixes across the MyKIZ monorepo (Dart Frog backend,
 `admin_web` Flutter web app, `student_app` Flutter mobile app). Work splits into
 three groups:
 
-- **A. Backend / data** — fixes the root cause behind all four "Failed to load"
-  bugs, plus extends seed data.
+- **A. Backend / data** — frontend parse fixes (occupancy model mismatch,
+  bookings `meta:null` crash) that are the actual "Failed to load" causes, plus
+  extended seed data and a defensive boot-time migrate/seed.
 - **B. Admin web** — session persistence, collapsible sidebar shell, Overview
   landing page, demo-credential fill.
 - **C. Student app** — demo-credential fill, login premature-navigation fix.
@@ -21,31 +22,59 @@ Target environment for the bugs: the deployed server at `https://api.isaacfurqan
 
 ## Root-cause analysis (bugs)
 
-### The four "Failed to load" errors share one root cause
+**Verified live on the deployed server (`ssh vps`, backend on `localhost:8080`,
+Postgres container `mykiz-postgres`).** The original "missing migrations"
+hypothesis was **wrong** and is discarded. Findings:
 
-`occupancy`, `applications`, admin `bookings`, and `facilities` all live in
-migrations **004_create_accommodation.sql** and **005_create_bookings.sql**.
+- All 12 tables exist (migrations 004 + 005 applied). The DB is simply **empty**
+  of demo data: `facilities=0, bookings=0, accommodation_applications=0,
+  facility_slot_configs=0` (only 5 seeded users + blocks/rooms/beds).
+- Every endpoint returns **HTTP 200** with valid JSON — `facilities`,
+  `admin/bookings`, `bookings`, `my-applications`, `occupancy`, `applications`,
+  `settings` all succeed. **There are no 500s.** So the "Failed to load" errors
+  are **frontend parsing failures**, not backend failures.
 
-Migrations are applied **only** via the Postgres container's
-`docker-entrypoint-initdb.d` mount (`docker-compose.yml`), which runs the SQL
-files **once, when the data volume is first initialised**. Migrations 004 and
-005 were added after the server's volume already existed, so those tables were
-never created on the deployed DB. Every endpoint that queries them throws and is
-caught by the route's `catch (_)` → `500 INTERNAL_ERROR` → the Flutter apps show
-their generic "Failed to load ..." message.
+### Bug 1 — Occupancy: model mismatch (definite)
 
-`deploy.sh` pulls, rebuilds, and restarts — it never runs migrations or the seed.
-So a normal deploy cannot heal this.
+`GET /accommodation/occupancy` returns rows shaped
+`{roomId, roomNumber, roomType, total, occupied}`. The client
+`getOccupancy()` maps each into `Room.fromJson`, but `Room` **requires** `id`
+and `blockId` (absent in the response) → `_$RoomFromJson` throws → caught by
+`occupancy_provider.dart` → "Failed to load occupancy data." Present even with
+zero occupancy, because it fires on the room list itself.
 
-Confirmed by reading: `docker-compose.yml`, `deploy.sh`, the route handlers
-(e.g. `routes/api/v1/facilities/index.dart` returns `[]` cleanly when the table
-is empty, so an *empty* table would NOT error — only a *missing* table errors).
+### Bug 2 — Bookings: `meta` null-cast (definite)
 
-**Verification step (first task in implementation):** reproduce against
-`api.isaacfurqan.dev` (login as `S98765`, GET `/api/v1/facilities`) and confirm
-a 500 with a missing-relation error, versus an empty `[]`. This decides whether
-the fix is purely "apply migrations + seed" or whether a genuine query bug also
-exists. Follow systematic-debugging; do not assume.
+`GET /bookings`, `/admin/bookings`, `/facilities` return `"meta": null`. The
+paginated client methods do
+`PaginationMeta.fromJson(response['meta'] as Map<String, dynamic>)`; casting
+`null` to a non-nullable `Map` throws → "Failed to load bookings" on both the
+admin bookings tab (`listAllBookings`) and the student bookings/facilities tab
+(`listBookings` via `fetchActiveBookings`). `listFacilities` does not read
+`meta`, so the facility list itself is fine — the crash is the bookings fetch on
+that screen.
+
+### Bug 3 — Student "Could not load applications" (verify against data)
+
+`GET /my-applications` returns valid `{active:[], history:[]}`; the model is
+freezed-symmetric (service builds the model, route emits `.toJson()`), so the
+empty case parses cleanly and does **not** currently reproduce. Most likely a
+stale deployed build or a data-dependent parse issue. **Action:** after seeding
+real applications, load the student accommodation screen and the admin
+applications tab; if a parse error appears, fix the specific field mismatch.
+Treat as lower-confidence until observed with data.
+
+### Consequence for empty screens
+
+Even after the parse fixes, bookings / applications / reports / occupancy-
+assignments are **empty** because no such rows are seeded. So seeding
+(Group A) is required for the screens to show anything, and seeding is also what
+may surface Bug 3. Parse fixes + seed are complementary, not alternatives.
+
+### Why a normal deploy didn't help
+
+`deploy.sh` rebuilds and restarts but never seeds. The frontend parse bugs ship
+in the built web/mobile artifacts, so they persist until fixed and redeployed.
 
 ### Student login premature navigation
 
@@ -60,9 +89,32 @@ systematic-debugging; write a failing test against `computeRedirect` first.
 
 ---
 
-## Group A — Backend / data
+## Group A — Backend / data + frontend parse fixes
 
-### A1. Auto-migrate on boot (chosen approach)
+### A0. Frontend parse fixes (the actual bug fixes)
+
+- **Occupancy (Bug 1):** stop reusing `Room` for occupancy. Add a
+  `RoomOccupancy` DTO in `shared_core` (`roomId, roomNumber, roomType, total,
+  occupied`); change `MyKizApiClient.getOccupancy` to return
+  `List<RoomOccupancy>`; update `occupancy_provider.dart` state + the occupancy
+  tab UI to consume it. (Alternatively make `Room.id/blockId` optional and map
+  `roomId→id`, but a dedicated DTO is clearer and matches the endpoint.)
+- **Bookings meta (Bug 2):** make the client tolerant of null `meta`. In
+  `listBookings` and `listAllBookings`, when `response['meta']` is null,
+  synthesize a default `PaginationMeta` (page 1, limit, totalItems = data
+  length, totalPages 1) instead of casting null. Also fix `bookingsBadgeProvider`
+  which reads `response.meta.totalItems`. Keeps client robust regardless of
+  backend inconsistency.
+- **Applications (Bug 3):** verify against seeded data (see analysis); fix only
+  if a concrete mismatch is observed.
+- Add unit tests: occupancy JSON → `RoomOccupancy`; paginated parse with
+  `meta:null` → default meta, no throw.
+
+### A1. Auto-migrate on boot (defensive; not the bug fix)
+
+Tables already exist on the server, so this is a **no-op today** — but it is a
+cheap safety net that makes future migrations self-applying and lets a deploy
+seed automatically. Lower priority than A0 + A2.
 
 Add a Dart Frog custom entrypoint `packages/backend/main.dart` exporting:
 
@@ -120,11 +172,17 @@ Extend the seed with deterministic fixed-UUID data:
 
 All new seed rows use fixed UUIDs and `ON CONFLICT DO NOTHING` for idempotency.
 
-### A3. Deploy
+### A3. Deploy / getting data onto the server
 
-No change to `deploy.sh` required for correctness (boot hook handles migrate +
-seed on restart). Optionally note in the spec that `deploy.sh` already restarts
-the backend, which now triggers migrate/seed.
+Two paths, both available (we have `ssh vps`):
+- **Automatic:** the boot hook's `seedIfEmpty()` populates the empty server DB
+  on the next `systemctl restart mykiz-backend` (which `deploy.sh` already does).
+- **Manual (fastest for verification):** run `melos run seed` (i.e.
+  `dart run bin/seed.dart` from `packages/backend`) over SSH once the seed is
+  extended. Backend server has the Dart SDK on PATH.
+
+Verify the extended seed populates rows, then re-check each endpoint returns
+non-empty 200 JSON.
 
 ---
 
@@ -219,8 +277,10 @@ Fills matric + password (`password123`); no auto-submit.
   widget test for demo-fill menu populating fields; widget test for Overview
   cards rendering counts and navigating. Session-persistence test: mock storage
   returns a token → app boots authenticated.
-- **Manual verification:** reproduce each of the 6 bugs against
-  `api.isaacfurqan.dev` before and after, per verification-before-completion.
+- **Manual verification:** against the live server (`ssh vps`, seeded), load
+  each affected screen in both apps and confirm no "Failed to load" — occupancy
+  tab, admin bookings tab, student bookings/facilities tab, student + admin
+  applications. Per verification-before-completion.
 
 ## Out of scope
 
@@ -233,7 +293,9 @@ Fills matric + password (`password123`); no auto-submit.
 
 1. Exact filesystem path for reading `migrations/*.sql` from the dart_frog
    `build/` output on the server (bundle vs. relative path). Verify on server.
+   (Only relevant to the defensive A1 boot hook.)
 2. Confirm `accommodation_applications` schema (columns, enum values, bed
    assignment linkage) from `004_create_accommodation.sql` before writing seed.
-3. Confirm whether a genuine query bug exists beyond missing tables (from the
-   verification step).
+3. RESOLVED: no missing tables / no 500s — bugs are frontend parse (occupancy
+   `Room` mismatch, bookings `meta:null` cast). Confirmed live on server.
+4. Whether Bug 3 (student applications) reproduces with seeded data — verify.
