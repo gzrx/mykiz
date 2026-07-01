@@ -378,12 +378,153 @@ void main() async {
       );
     }
 
+    // --- Seed Facilities ---
+    print('  Creating facilities...');
+    const facilityIds = [
+      '00000000-0000-4000-e000-000000000001', // Badminton (auto)
+      '00000000-0000-4000-e000-000000000002', // Futsal (manual)
+      '00000000-0000-4000-e000-000000000003', // Study Room (auto)
+    ];
+    await connection.execute(
+      Sql.named(
+        'INSERT INTO facilities (id, name, description, approval_mode, capacity) VALUES '
+        "(@id1, 'Badminton Court', 'Indoor court', 'auto', 4), "
+        "(@id2, 'Futsal Court', 'Outdoor futsal', 'manual', 10), "
+        "(@id3, 'Study Room', 'Quiet study room', 'auto', 6) "
+        'ON CONFLICT (id) DO NOTHING',
+      ),
+      parameters: {
+        'id1': facilityIds[0],
+        'id2': facilityIds[1],
+        'id3': facilityIds[2],
+      },
+    );
+
+    // --- Seed Slot Configs (2 per facility, non-overlapping) ---
+    print('  Creating facility slot configs...');
+    const slotIds = [
+      '00000000-0000-4000-e100-000000000001',
+      '00000000-0000-4000-e100-000000000002',
+      '00000000-0000-4000-e100-000000000003',
+      '00000000-0000-4000-e100-000000000004',
+      '00000000-0000-4000-e100-000000000005',
+      '00000000-0000-4000-e100-000000000006',
+    ];
+    final slots = [
+      [slotIds[0], facilityIds[0], '08:00', '10:00'],
+      [slotIds[1], facilityIds[0], '10:00', '12:00'],
+      [slotIds[2], facilityIds[1], '16:00', '18:00'],
+      [slotIds[3], facilityIds[1], '18:00', '20:00'],
+      [slotIds[4], facilityIds[2], '09:00', '11:00'],
+      [slotIds[5], facilityIds[2], '14:00', '16:00'],
+    ];
+    for (final s in slots) {
+      await connection.execute(
+        Sql.named(
+          'INSERT INTO facility_slot_configs (id, facility_id, start_time, end_time) '
+          'VALUES (@id, @fid, @st::time, @et::time) ON CONFLICT (id) DO NOTHING',
+        ),
+        parameters: {'id': s[0], 'fid': s[1], 'st': s[2], 'et': s[3]},
+      );
+    }
+
+    // --- Seed Bookings (mixed statuses across facilities/dates) ---
+    print('  Creating bookings...');
+    const bookingIds = [
+      '00000000-0000-4000-e200-000000000001',
+      '00000000-0000-4000-e200-000000000002',
+      '00000000-0000-4000-e200-000000000003',
+      '00000000-0000-4000-e200-000000000004',
+      '00000000-0000-4000-e200-000000000005',
+    ];
+    // [id, ref, student, facility, slot, dateOffsetDays, status]
+    final bookings = [
+      [bookingIds[0], 'BK-SEED-0001', studentIds[0], facilityIds[0], slotIds[0], 2, 'confirmed'],
+      [bookingIds[1], 'BK-SEED-0002', studentIds[1], facilityIds[1], slotIds[2], 1, 'pending'],
+      [bookingIds[2], 'BK-SEED-0003', studentIds[2], facilityIds[2], slotIds[4], -3, 'completed'],
+      [bookingIds[3], 'BK-SEED-0004', studentIds[0], facilityIds[1], slotIds[3], -1, 'no_show'],
+      [bookingIds[4], 'BK-SEED-0005', studentIds[1], facilityIds[2], slotIds[5], -5, 'cancelled'],
+    ];
+    for (final b in bookings) {
+      await connection.execute(
+        Sql.named(
+          'INSERT INTO bookings '
+          '(id, booking_reference, student_id, facility_id, slot_config_id, booking_date, status) '
+          'VALUES (@id, @ref, @sid, @fid, @slot, CURRENT_DATE + @off, @status) '
+          'ON CONFLICT (id) DO NOTHING',
+        ),
+        parameters: {
+          'id': b[0], 'ref': b[1], 'sid': b[2], 'fid': b[3],
+          'slot': b[4], 'off': b[5], 'status': b[6],
+        },
+      );
+    }
+
+    // --- Seed Accommodation Applications (mixed statuses) ---
+    // status enum: submitted | approved | checked_in | checked_out | rejected
+    print('  Creating accommodation applications...');
+    const appIds = [
+      '00000000-0000-4000-e300-000000000001',
+      '00000000-0000-4000-e300-000000000002',
+      '00000000-0000-4000-e300-000000000003',
+    ];
+    // Application 1: submitted (semester, no assignment)
+    await connection.execute(
+      Sql.named(
+        'INSERT INTO accommodation_applications '
+        '(id, student_id, application_type, status, room_type_preference, preferred_block_id, lifestyle_tags) '
+        "VALUES (@id, @sid, 'semester', 'submitted', 'single', @block, ARRAY['non_smoker','early_sleeper']) "
+        'ON CONFLICT (id) DO NOTHING',
+      ),
+      parameters: {'id': appIds[0], 'sid': studentIds[0], 'block': blockIds[0]},
+    );
+    // Application 2: approved with bed assignment (bed A-101 -> bedIds[0])
+    await connection.execute(
+      Sql.named(
+        'INSERT INTO accommodation_applications '
+        '(id, student_id, application_type, status, room_type_preference, '
+        ' assigned_block_id, assigned_room_id, assigned_bed_id) '
+        "VALUES (@id, @sid, 'semester', 'approved', 'single', @block, @room, @bed) "
+        'ON CONFLICT (id) DO NOTHING',
+      ),
+      parameters: {
+        'id': appIds[1],
+        'sid': studentIds[1],
+        'block': blockIds[0],
+        'room': roomIds[0],
+        'bed': bedIds[0],
+      },
+    );
+    // Mark that bed occupied so occupancy shows 1/1 for A-101
+    await connection.execute(
+      Sql.named("UPDATE beds SET is_occupied = TRUE WHERE id = @bed"),
+      parameters: {'bed': bedIds[0]},
+    );
+    // Application 3: rejected (out_of_semester)
+    await connection.execute(
+      Sql.named(
+        'INSERT INTO accommodation_applications '
+        '(id, student_id, application_type, status, check_in_date, check_out_date, '
+        ' nightly_rate, total_cost, rejection_reason) '
+        "VALUES (@id, @sid, 'out_of_semester', 'rejected', CURRENT_DATE + 5, CURRENT_DATE + 12, "
+        ' 25.00, 175.00, @reason) '
+        'ON CONFLICT (id) DO NOTHING',
+      ),
+      parameters: {
+        'id': appIds[2],
+        'sid': studentIds[2],
+        'reason': 'Out-of-semester window is currently closed.',
+      },
+    );
+
     print('✅ Seed completed successfully!');
     print('   - 3 Students (A123456, A234567, A345678)');
     print('   - 2 Admins (S98765, S87654)');
     print('   - 5 Announcements');
     print('   - 4 Complaints (2 submitted, 1 in_progress, 1 resolved)');
     print('   - 3 Blocks (A, B, C) with 14 rooms and 21 beds');
+    print('   - 3 Facilities, 6 slot configs, 5 bookings');
+    print('   - 3 Accommodation applications (submitted/approved/rejected)');
     print('   Password for all accounts: password123');
   } catch (e, st) {
     print('❌ Seed failed: $e');
