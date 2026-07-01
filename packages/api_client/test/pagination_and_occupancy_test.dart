@@ -45,6 +45,28 @@ void main() {
     expect(result.meta.totalItems, 0);
   });
 
+  test('listAnnouncements tolerates null meta', () async {
+    when(() => dio.get<Map<String, dynamic>>('/api/v1/announcements',
+            queryParameters: any(named: 'queryParameters')))
+        .thenAnswer((_) async => resp({'data': <dynamic>[], 'meta': null}));
+
+    final result = await client.listAnnouncements();
+    expect(result.items, isEmpty);
+    expect(result.meta.totalItems, 0);
+    expect(result.meta.currentPage, 1);
+  });
+
+  test('listComplaints tolerates null meta', () async {
+    when(() => dio.get<Map<String, dynamic>>('/api/v1/complaints',
+            queryParameters: any(named: 'queryParameters')))
+        .thenAnswer((_) async => resp({'data': <dynamic>[], 'meta': null}));
+
+    final result = await client.listComplaints();
+    expect(result.items, isEmpty);
+    expect(result.meta.totalItems, 0);
+    expect(result.meta.currentPage, 1);
+  });
+
   test('getOccupancy parses RoomOccupancy list', () async {
     when(() => dio.get<Map<String, dynamic>>('/api/v1/accommodation/occupancy',
             queryParameters: any(named: 'queryParameters')))

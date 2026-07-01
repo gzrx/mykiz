@@ -116,8 +116,7 @@ class MyKizApiClient {
     final items = (response['data'] as List<dynamic>)
         .map((e) => Announcement.fromJson(e as Map<String, dynamic>))
         .toList();
-    final meta =
-        PaginationMeta.fromJson(response['meta'] as Map<String, dynamic>);
+    final meta = _metaOf(response, items.length);
 
     return PaginatedResponse(items: items, meta: meta);
   }
@@ -202,8 +201,7 @@ class MyKizApiClient {
     final items = (response['data'] as List<dynamic>)
         .map((e) => Complaint.fromJson(e as Map<String, dynamic>))
         .toList();
-    final meta =
-        PaginationMeta.fromJson(response['meta'] as Map<String, dynamic>);
+    final meta = _metaOf(response, items.length);
 
     return PaginatedResponse(items: items, meta: meta);
   }
