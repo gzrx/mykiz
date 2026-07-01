@@ -114,7 +114,7 @@ class Database {
       );
       if (done.isNotEmpty) continue;
       await transaction((tx) async {
-        await tx.execute(file.readAsStringSync());
+        await tx.execute(file.readAsStringSync(), queryMode: QueryMode.simple);
         await tx.execute(
           Sql.named('INSERT INTO schema_migrations (filename) VALUES (@n)'),
           parameters: {'n': name},
