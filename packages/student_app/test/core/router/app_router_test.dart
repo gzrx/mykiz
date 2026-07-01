@@ -7,6 +7,27 @@ import 'package:student_app/core/router/app_router.dart';
 import 'package:student_app/features/auth/application/auth_provider.dart';
 
 void main() {
+  group('computeRedirect', () {
+    test('unknown status stays (no redirect, no flash)', () {
+      expect(computeRedirect(AuthStatus.unknown, '/dashboard'), isNull);
+    });
+    test('unauthenticated on /dashboard -> /login', () {
+      expect(
+        computeRedirect(AuthStatus.unauthenticated, '/dashboard'),
+        '/login',
+      );
+    });
+    test('loading stays', () {
+      expect(computeRedirect(AuthStatus.loading, '/login'), isNull);
+    });
+    test('authenticated on /login -> /dashboard', () {
+      expect(
+        computeRedirect(AuthStatus.authenticated, '/login'),
+        '/dashboard',
+      );
+    });
+  });
+
   group('Router integration - auth redirects', () {
     testWidgets('authenticated user lands on /dashboard', (tester) async {
       final container = ProviderContainer(overrides: [

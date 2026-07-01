@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -31,6 +30,7 @@ abstract final class AppRoutes {
 /// Returns the redirect path (or null for no redirect) given the current
 /// [status] and the [currentRoute] the user is attempting to visit.
 String? computeRedirect(AuthStatus status, String currentRoute) {
+  if (status == AuthStatus.unknown) return null; // bootstrapping: show splash
   if (status == AuthStatus.loading) return null;
 
   final isAuthenticated = status == AuthStatus.authenticated;

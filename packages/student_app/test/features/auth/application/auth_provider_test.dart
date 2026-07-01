@@ -16,11 +16,50 @@ void main() {
   });
 
   group('AuthNotifier', () {
-    test('initial state is unauthenticated', () {
-      expect(authNotifier.state.status, AuthStatus.unauthenticated);
+    test('initial state is unknown (bootstrap, prevents dashboard flash)',
+        () {
+      expect(authNotifier.state.status, AuthStatus.unknown);
       expect(authNotifier.state.token, isNull);
       expect(authNotifier.state.user, isNull);
       expect(authNotifier.state.errorMessage, isNull);
+    });
+
+    test('resolveInitial flips unknown to unauthenticated', () {
+      expect(authNotifier.state.status, AuthStatus.unknown);
+
+      authNotifier.resolveInitial();
+
+      expect(authNotifier.state.status, AuthStatus.unauthenticated);
+    });
+
+    test('resolveInitial is a no-op once state has moved past unknown',
+        () async {
+      final user = User(
+        id: 'user-123',
+        identifier: 'A123456',
+        name: 'Test Student',
+        role: 'student',
+        createdAt: DateTime(2024, 1, 1),
+      );
+      final loginResponse = LoginResponse(token: 'jwt-token', user: user);
+
+      when(() => mockApiClient.login(
+            identifier: any(named: 'identifier'),
+            password: any(named: 'password'),
+          )).thenAnswer((_) async => loginResponse);
+      when(() => mockApiClient.setToken(any())).thenReturn(null);
+
+      await authNotifier.login(
+        identifier: 'A123456',
+        password: 'password123',
+      );
+      expect(authNotifier.state.status, AuthStatus.authenticated);
+
+      authNotifier.resolveInitial();
+
+      // Should remain authenticated; resolveInitial must not clobber a
+      // state that has already moved past the unknown bootstrap phase.
+      expect(authNotifier.state.status, AuthStatus.authenticated);
     });
 
     test('login sets state to loading then authenticated on success',

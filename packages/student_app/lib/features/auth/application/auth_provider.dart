@@ -4,6 +4,11 @@ import 'package:shared_core/shared_core.dart';
 
 /// Authentication state for the student app.
 enum AuthStatus {
+  /// Initial bootstrap state before the app has resolved whether a session
+  /// exists. Used to gate the router so no protected route can flash before
+  /// the redirect settles.
+  unknown,
+
   /// User is authenticated with a valid token.
   authenticated,
 
@@ -17,7 +22,7 @@ enum AuthStatus {
 /// Holds the current authentication state including token and user.
 class AuthState {
   const AuthState({
-    this.status = AuthStatus.unauthenticated,
+    this.status = AuthStatus.unknown,
     this.token,
     this.user,
     this.errorMessage,
@@ -96,7 +101,15 @@ class AuthNotifier extends StateNotifier<AuthState> {
   /// Logs out the current user.
   void logout() {
     _apiClient.clearToken();
-    state = const AuthState();
+    state = const AuthState(status: AuthStatus.unauthenticated);
+  }
+
+  /// Resolves the initial bootstrap state. No persistence in this app, so a
+  /// cold start simply becomes unauthenticated (prevents dashboard flash).
+  void resolveInitial() {
+    if (state.status == AuthStatus.unknown) {
+      state = const AuthState(status: AuthStatus.unauthenticated);
+    }
   }
 }
 

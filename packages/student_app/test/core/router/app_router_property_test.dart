@@ -115,7 +115,9 @@ void main() {
 
         // Compute expected per truth table
         final String? expected;
-        if (status == AuthStatus.loading) {
+        if (status == AuthStatus.unknown) {
+          expected = null;
+        } else if (status == AuthStatus.loading) {
           expected = null;
         } else if (status == AuthStatus.authenticated &&
             route == '/login') {
