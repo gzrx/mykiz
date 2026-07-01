@@ -429,10 +429,10 @@ class MyKizApiClient {
         response['data'] as Map<String, dynamic>);
   }
 
-  /// Returns occupancy data for a block (rooms with bed counts).
+  /// Returns per-room occupancy counts for a block.
   ///
   /// GET /api/v1/accommodation/occupancy?blockId=...
-  Future<List<Room>> getOccupancy(String blockId) async {
+  Future<List<RoomOccupancy>> getOccupancy(String blockId) async {
     final response = await _request<Map<String, dynamic>>(
       () => _dio.get<Map<String, dynamic>>(
         '/api/v1/accommodation/occupancy',
@@ -441,7 +441,7 @@ class MyKizApiClient {
     );
 
     return (response['data'] as List<dynamic>)
-        .map((e) => Room.fromJson(e as Map<String, dynamic>))
+        .map((e) => RoomOccupancy.fromJson(e as Map<String, dynamic>))
         .toList();
   }
 
@@ -566,8 +566,7 @@ class MyKizApiClient {
     final items = (response['data'] as List<dynamic>)
         .map((e) => Booking.fromJson(e as Map<String, dynamic>))
         .toList();
-    final meta =
-        PaginationMeta.fromJson(response['meta'] as Map<String, dynamic>);
+    final meta = _metaOf(response, items.length);
     return PaginatedResponse(items: items, meta: meta);
   }
 
@@ -652,8 +651,7 @@ class MyKizApiClient {
     final items = (response['data'] as List<dynamic>)
         .map((e) => Booking.fromJson(e as Map<String, dynamic>))
         .toList();
-    final meta =
-        PaginationMeta.fromJson(response['meta'] as Map<String, dynamic>);
+    final meta = _metaOf(response, items.length);
     return PaginatedResponse(items: items, meta: meta);
   }
 
@@ -877,6 +875,21 @@ class MyKizApiClient {
   // ---------------------------------------------------------------------------
   // Internal helpers
   // ---------------------------------------------------------------------------
+
+  /// Builds a [PaginationMeta] from a response, synthesizing a sensible
+  /// default when the server omits or nulls the `meta` field.
+  PaginationMeta _metaOf(Map<String, dynamic> response, int itemCount) {
+    final meta = response['meta'];
+    if (meta is Map<String, dynamic>) {
+      return PaginationMeta.fromJson(meta);
+    }
+    return PaginationMeta(
+      currentPage: 1,
+      limit: itemCount == 0 ? 20 : itemCount,
+      totalItems: itemCount,
+      totalPages: 1,
+    );
+  }
 
   /// Executes a request and extracts the response data, mapping errors to
   /// typed exceptions.
