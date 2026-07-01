@@ -16,10 +16,11 @@ cd build && sed -i "s/>=3.0.0 <4.0.0/>=3.5.0 <4.0.0/" pubspec.yaml 2>/dev/null; 
 cd ~/mykiz
 
 echo "==> Restarting backend..."
-echo 123 | sudo -S systemctl restart mykiz-backend 2>/dev/null
+sudo -n systemctl restart mykiz-backend
 
 echo "==> Rebuilding admin web..."
-cd packages/admin_web && flutter pub get && flutter build web --release 2>&1 | tail -1
+cd packages/admin_web && flutter pub get && flutter build web --release --dart-define=API_BASE_URL=https://api.isaacfurqan.dev 2>&1 | tail -1
+chmod -R o+rX build/web
 cd ~/mykiz
 
 echo "==> Done!"

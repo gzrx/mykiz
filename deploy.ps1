@@ -10,6 +10,6 @@ git commit -m $msg --allow-empty
 git push
 
 Write-Host "==> Deploying on server..." -ForegroundColor Cyan
-ssh isaac@ssh.isaacfurqan.me "bash ~/mykiz/deploy.sh"
+ssh vps "bash ~/mykiz/deploy.sh"
 
 Write-Host "==> Done!" -ForegroundColor Green

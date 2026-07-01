@@ -8,7 +8,7 @@ final apiClientProvider = Provider<MyKizApiClient>((ref) {
   return MyKizApiClient(
     baseUrl: const String.fromEnvironment(
       'API_BASE_URL',
-      defaultValue: 'https://app.isaacfurqan.me',
+      defaultValue: 'https://api.isaacfurqan.dev',
     ),
   );
 });

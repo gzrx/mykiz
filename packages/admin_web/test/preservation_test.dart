@@ -8,16 +8,16 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group('Preservation — Student App API Unchanged', () {
-    test('student_app apiClientProvider baseUrl remains https://app.isaacfurqan.me', () {
+    test('student_app apiClientProvider baseUrl defaults to https://api.isaacfurqan.dev', () {
       final source =
           File('../student_app/lib/features/auth/application/auth_provider.dart')
               .readAsStringSync();
 
       // ponytail: file-read avoids needing Riverpod container
       expect(
-        source.contains("baseUrl: 'https://app.isaacfurqan.me'"),
+        source.contains("defaultValue: 'https://api.isaacfurqan.dev'"),
         isTrue,
-        reason: 'student_app baseUrl must remain https://app.isaacfurqan.me',
+        reason: 'student_app baseUrl must default to https://api.isaacfurqan.dev',
       );
     });
   });
