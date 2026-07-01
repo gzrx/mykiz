@@ -35,7 +35,7 @@ class FakeAccommodationRepository implements AccommodationRepository {
   Future<List<Block>> listBlocks() async => [];
 
   @override
-  Future<List<Room>> getOccupancy(String blockId) async => [];
+  Future<List<RoomOccupancy>> getOccupancy(String blockId) async => [];
 
   @override
   Future<List<Room>> listRooms({required String blockId, String? roomType}) async => [];

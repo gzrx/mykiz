@@ -26,7 +26,7 @@ class AccommodationRepository {
   Future<List<Block>> listBlocks() => _client.listBlocks();
 
   /// Returns occupancy data (rooms with beds) for a block.
-  Future<List<Room>> getOccupancy(String blockId) =>
+  Future<List<RoomOccupancy>> getOccupancy(String blockId) =>
       _client.getOccupancy(blockId);
 
   /// Returns rooms for a block, optionally filtered by room type.
