@@ -21,6 +21,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
 
+  static const _demoAccounts = <({String id, String name})>[
+    (id: 'S98765', name: 'Dr. Aminah'),
+    (id: 'S87654', name: 'Encik Razak'),
+  ];
+
   @override
   void dispose() {
     _identifierController.dispose();
@@ -35,6 +40,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           identifier: _identifierController.text.trim(),
           password: _passwordController.text,
         );
+  }
+
+  void _fillDemo(String id) {
+    _identifierController.text = id;
+    _passwordController.text = 'password123';
   }
 
   @override
@@ -95,6 +105,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     children: [
                       // Staff ID field
                       TextFormField(
+                        key: const Key('staffField'),
                         controller: _identifierController,
                         decoration: const InputDecoration(
                           labelText: 'Staff ID',
@@ -114,6 +125,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
                       // Password field
                       TextFormField(
+                        key: const Key('passwordField'),
                         controller: _passwordController,
                         decoration: InputDecoration(
                           labelText: 'Password',
@@ -193,6 +205,29 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                   ),
                                 )
                               : const Text('Sign In'),
+                        ),
+                      ),
+                      const SizedBox(height: KizSpacing.sm),
+                      Align(
+                        alignment: Alignment.center,
+                        child: PopupMenuButton<String>(
+                          tooltip: 'Fill demo credentials',
+                          onSelected: _fillDemo,
+                          itemBuilder: (context) => [
+                            for (final a in _demoAccounts)
+                              PopupMenuItem(
+                                value: a.id,
+                                child: Text('${a.id} — ${a.name}'),
+                              ),
+                          ],
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.science_outlined, size: 16),
+                              SizedBox(width: 4),
+                              Text('Demo'),
+                            ],
+                          ),
                         ),
                       ),
                     ],
