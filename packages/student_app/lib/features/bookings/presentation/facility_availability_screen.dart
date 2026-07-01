@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../core/theme/kiz_theme.dart';
+import '../../../core/widgets/kiz_card.dart';
+import '../../../core/widgets/kiz_status.dart';
 import '../application/bookings_provider.dart';
 
 /// Screen showing slot availability for a facility with date picker.
@@ -227,43 +229,29 @@ class _SlotTile extends StatelessWidget {
     final isBlocked = slot['blocked'] == true;
     final isPast = slot['past'] == true;
 
-    final Color statusColor;
+    final KizStatusKind statusKind;
     final String statusText;
 
     if (isBlocked) {
-      statusColor = Colors.red;
+      statusKind = KizStatusKind.blocked;
       statusText = 'Blocked';
     } else if (isPast) {
-      statusColor = Colors.grey;
+      statusKind = KizStatusKind.done;
       statusText = 'Past';
     } else if (available <= 0) {
-      statusColor = Colors.red;
+      statusKind = KizStatusKind.blocked;
       statusText = 'Full';
     } else {
-      statusColor = Colors.green;
+      statusKind = KizStatusKind.active;
       statusText = '$available available';
     }
 
     final canBook = !isBlocked && !isPast && available > 0;
 
-    return Container(
-      padding: const EdgeInsets.all(KizSpacing.lg),
-      decoration: BoxDecoration(
-        color: KizColors.surface,
-        borderRadius: BorderRadius.circular(KizRadius.card),
-        border: Border.all(color: KizColors.cardBorder),
-      ),
+    return KizCard(
+      spineKind: statusKind,
       child: Row(
         children: [
-          Container(
-            width: 4,
-            height: 40,
-            decoration: BoxDecoration(
-              color: statusColor,
-              borderRadius: BorderRadius.circular(2),
-            ),
-          ),
-          const SizedBox(width: KizSpacing.md),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -281,7 +269,7 @@ class _SlotTile extends StatelessWidget {
                   statusText,
                   style: GoogleFonts.poppins(
                     fontSize: 13,
-                    color: statusColor,
+                    color: statusKind.color,
                   ),
                 ),
               ],

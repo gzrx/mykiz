@@ -5,6 +5,7 @@ import 'package:shared_core/shared_core.dart';
 
 import '../../../core/router/app_router.dart';
 import '../../../core/theme/kiz_theme.dart';
+import '../../../core/widgets/widgets.dart';
 import '../application/announcements_provider.dart';
 
 /// Announcements list screen for Admin Web.
@@ -151,7 +152,7 @@ class _AnnouncementsScreenState extends ConsumerState<AnnouncementsScreen> {
             const SizedBox(height: KizSpacing.base),
             Text(
               'No announcements yet',
-              style: theme.textTheme.headlineSmall,
+              style: KizFonts.display(fontSize: 22),
             ),
             const SizedBox(height: KizSpacing.sm),
             Text(
@@ -261,52 +262,46 @@ class _AnnouncementCard extends StatelessWidget {
         ? '${announcement.body.substring(0, 120)}...'
         : announcement.body;
 
-    return Card(
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(8),
-        child: Padding(
-          padding: const EdgeInsets.all(KizSpacing.lg),
-          child: Column(
+    return KizCard(
+      onTap: onTap,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: Text(
-                      announcement.title,
-                      style: theme.textTheme.headlineSmall,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  IconButton(
-                    onPressed: onDelete,
-                    icon: const Icon(Icons.delete_outline),
-                    color: KizColors.error,
-                    tooltip: 'Delete announcement',
-                    iconSize: 20,
-                  ),
-                ],
-              ),
-              const SizedBox(height: KizSpacing.sm),
-              Text(
-                snippet,
-                style: theme.textTheme.bodyMedium,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-              const SizedBox(height: KizSpacing.md),
-              Text(
-                _formatDate(announcement.createdAt),
-                style: theme.textTheme.labelSmall?.copyWith(
-                  color: KizColors.onSurface.withValues(alpha: 0.6),
+              Expanded(
+                child: Text(
+                  announcement.title,
+                  style: theme.textTheme.headlineSmall,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                 ),
+              ),
+              IconButton(
+                onPressed: onDelete,
+                icon: const Icon(Icons.delete_outline),
+                color: KizColors.error,
+                tooltip: 'Delete announcement',
+                iconSize: 20,
               ),
             ],
           ),
-        ),
+          const SizedBox(height: KizSpacing.sm),
+          Text(
+            snippet,
+            style: theme.textTheme.bodyMedium,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
+          const SizedBox(height: KizSpacing.md),
+          Text(
+            _formatDate(announcement.createdAt),
+            style: theme.textTheme.labelSmall?.copyWith(
+              color: KizColors.onSurface.withValues(alpha: 0.6),
+            ),
+          ),
+        ],
       ),
     );
   }

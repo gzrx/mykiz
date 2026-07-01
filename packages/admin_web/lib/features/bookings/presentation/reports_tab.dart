@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/kiz_theme.dart';
+import '../../../core/widgets/widgets.dart';
 import '../data/bookings_repository.dart';
 
 /// Tab showing booking reports: summary and utilization.
@@ -83,22 +84,19 @@ class _ReportsTabState extends ConsumerState<ReportsTab> {
   List<Widget> _buildSummaryCards(ThemeData theme) {
     final entries = _summary!.entries.toList();
     return entries.map((e) {
-      return Card(
-        child: Padding(
-          padding: const EdgeInsets.all(KizSpacing.base),
-          child: Column(
-            children: [
-              Text(
-                e.value.toString(),
-                style: theme.textTheme.headlineMedium,
-              ),
-              const SizedBox(height: KizSpacing.xs),
-              Text(
-                _formatKey(e.key),
-                style: theme.textTheme.bodySmall,
-              ),
-            ],
-          ),
+      return KizCard(
+        child: Column(
+          children: [
+            Text(
+              e.value.toString(),
+              style: KizFonts.mono(fontSize: 28, fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: KizSpacing.xs),
+            Text(
+              _formatKey(e.key),
+              style: theme.textTheme.bodySmall,
+            ),
+          ],
         ),
       );
     }).toList();

@@ -137,9 +137,10 @@ class _AnnouncementsListScreenState
             const SizedBox(height: KizSpacing.base),
             Text(
               'No announcements yet',
-              style: TextStyle(
+              style: KizFonts.display(
+                fontSize: 20,
+                fontWeight: FontWeight.w600,
                 color: KizColors.onSurface.withValues(alpha: 0.7),
-                fontSize: 16,
               ),
             ),
           ],

@@ -5,6 +5,7 @@ import 'package:shared_core/shared_core.dart';
 
 import '../../../core/router/app_router.dart';
 import '../../../core/theme/kiz_theme.dart';
+import '../../../core/widgets/widgets.dart';
 import '../application/complaints_provider.dart';
 
 /// Complaints list screen for Admin Web.
@@ -76,7 +77,7 @@ class _ComplaintsScreenState extends ConsumerState<ComplaintsScreen> {
       return Center(
         child: Text(
           'No complaints found.',
-          style: theme.textTheme.bodyLarge,
+          style: KizFonts.display(fontSize: 20),
         ),
       );
     }
@@ -165,47 +166,43 @@ class _ComplaintCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final (kind, label) = KizStatusMapper.complaint(complaint.status);
 
-    return Card(
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(8),
-        child: Padding(
-          padding: const EdgeInsets.all(KizSpacing.base),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+    return KizCard(
+      spineKind: kind,
+      onTap: onTap,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
             children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      complaint.location,
-                      style: theme.textTheme.labelLarge,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  const SizedBox(width: KizSpacing.sm),
-                  _StatusBadge(status: complaint.status),
-                ],
-              ),
-              const SizedBox(height: KizSpacing.sm),
-              Text(
-                complaint.description,
-                style: theme.textTheme.bodyMedium,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-              const SizedBox(height: KizSpacing.sm),
-              Text(
-                _formatDate(complaint.createdAt),
-                style: theme.textTheme.labelSmall?.copyWith(
-                  color: KizColors.onSurface.withValues(alpha: 0.6),
+              Expanded(
+                child: Text(
+                  complaint.location,
+                  style: theme.textTheme.labelLarge,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
+              const SizedBox(width: KizSpacing.sm),
+              KizStatusTab(kind: kind, label: label),
             ],
           ),
-        ),
+          const SizedBox(height: KizSpacing.sm),
+          Text(
+            complaint.description,
+            style: theme.textTheme.bodyMedium,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
+          const SizedBox(height: KizSpacing.sm),
+          Text(
+            _formatDate(complaint.createdAt),
+            style: theme.textTheme.labelSmall?.copyWith(
+              color: KizColors.onSurface.withValues(alpha: 0.6),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -217,46 +214,5 @@ class _ComplaintCard extends StatelessWidget {
     final hour = date.hour.toString().padLeft(2, '0');
     final minute = date.minute.toString().padLeft(2, '0');
     return '$day/$month/$year $hour:$minute';
-  }
-}
-
-/// Color-coded status badge widget.
-class _StatusBadge extends StatelessWidget {
-  const _StatusBadge({required this.status});
-
-  final String status;
-
-  @override
-  Widget build(BuildContext context) {
-    final (color, label) = _statusConfig(status);
-
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: KizSpacing.sm,
-        vertical: KizSpacing.xs,
-      ),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(4),
-        border: Border.all(color: color.withValues(alpha: 0.4)),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.w600,
-          color: color,
-        ),
-      ),
-    );
-  }
-
-  (Color, String) _statusConfig(String status) {
-    return switch (status) {
-      'submitted' => (const Color(0xFFD97706), 'Submitted'),
-      'in_progress' => (KizColors.secondary, 'In Progress'),
-      'resolved' => (const Color(0xFF16A34A), 'Resolved'),
-      _ => (KizColors.onSurface, status),
-    };
   }
 }

@@ -38,10 +38,7 @@ class AnnouncementDetailScreen extends ConsumerWidget {
               children: [
                 Text(
                   announcement.title,
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                        fontWeight: FontWeight.w600,
-                        color: KizColors.onBackground,
-                      ),
+                  style: KizFonts.display(fontSize: 24, fontWeight: FontWeight.w600),
                 ),
                 const SizedBox(height: KizSpacing.sm),
                 _buildDateRow(
@@ -89,9 +86,10 @@ class AnnouncementDetailScreen extends ConsumerWidget {
         const SizedBox(width: KizSpacing.xs),
         Text(
           '$label: ${_formatDate(date)}',
-          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: KizColors.onSurface.withValues(alpha: 0.6),
-              ),
+          style: KizFonts.mono(
+            fontSize: 12,
+            color: KizColors.onSurface.withValues(alpha: 0.6),
+          ),
         ),
       ],
     );

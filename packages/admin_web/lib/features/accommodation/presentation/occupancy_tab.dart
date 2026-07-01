@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_core/shared_core.dart';
 
 import '../../../core/theme/kiz_theme.dart';
+import '../../../core/widgets/widgets.dart';
 import '../application/occupancy_provider.dart';
 
 /// Occupancy tab content — reuses the same provider and layout as OccupancyScreen
@@ -150,9 +151,12 @@ class _RoomsPanel extends StatelessWidget {
         rows: [
           for (final room in state.rooms)
             DataRow(cells: [
-              DataCell(Text(room.roomNumber)),
+              DataCell(KizCodeTag(room.roomNumber)),
               DataCell(Text(_formatRoomType(room.roomType))),
-              DataCell(Text(_bedsFilled(room))),
+              DataCell(Text(
+                _bedsFilled(room),
+                style: KizFonts.mono(),
+              )),
             ]),
         ],
       ),

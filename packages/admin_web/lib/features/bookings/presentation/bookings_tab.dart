@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_core/shared_core.dart';
 
 import '../../../core/theme/kiz_theme.dart';
+import '../../../core/widgets/widgets.dart';
 import '../application/bookings_provider.dart';
 
 /// Tab displaying all bookings with filters and approve/reject actions.
@@ -158,11 +159,12 @@ class _BookingsTabState extends ConsumerState<BookingsTab> {
             DataColumn(label: Text('Actions')),
           ],
           rows: state.bookings.map((booking) {
+            final (kind, label) = KizStatusMapper.booking(booking.status);
             return DataRow(cells: [
-              DataCell(Text(booking.bookingReference)),
+              DataCell(KizCodeTag(booking.bookingReference)),
               DataCell(Text(booking.studentId)),
               DataCell(Text(_formatDate(booking.bookingDate))),
-              DataCell(_StatusChip(status: booking.status)),
+              DataCell(KizStatusTab(kind: kind, label: label)),
               DataCell(_ActionButtons(booking: booking)),
             ]);
           }).toList(),
@@ -190,32 +192,6 @@ class _BookingsTabState extends ConsumerState<BookingsTab> {
 
   String _toIso(DateTime date) {
     return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
-  }
-}
-
-class _StatusChip extends StatelessWidget {
-  const _StatusChip({required this.status});
-
-  final String status;
-
-  @override
-  Widget build(BuildContext context) {
-    final (color, label) = switch (status) {
-      'pending' => (Colors.orange, 'Pending'),
-      'confirmed' => (Colors.green, 'Confirmed'),
-      'cancelled' => (Colors.grey, 'Cancelled'),
-      'completed' => (const Color(0xFF3B82F6), 'Completed'),
-      'no_show' => (Colors.red, 'No Show'),
-      'rejected' => (Colors.red, 'Rejected'),
-      _ => (KizColors.onSurface, status),
-    };
-    return Chip(
-      label: Text(label, style: TextStyle(color: color, fontSize: 12)),
-      backgroundColor: color.withValues(alpha: 0.1),
-      side: BorderSide.none,
-      padding: EdgeInsets.zero,
-      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-    );
   }
 }
 

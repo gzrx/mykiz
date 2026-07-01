@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/theme/kiz_theme.dart';
+import '../../../core/widgets/widgets.dart';
 import '../application/check_in_out_provider.dart';
 
 /// Tab for scanning/entering application UUIDs to check in or check out.
@@ -51,6 +53,7 @@ class _CheckInOutTabState extends ConsumerState<CheckInOutTab> {
               controller: _controller,
               maxLength: 36,
               maxLengthEnforcement: MaxLengthEnforcement.enforced,
+              style: KizFonts.mono(),
               decoration: const InputDecoration(
                 hintText: 'Enter or scan application UUID',
                 border: OutlineInputBorder(),
@@ -84,19 +87,17 @@ class _CheckInOutTabState extends ConsumerState<CheckInOutTab> {
           if (state.isLoading) const CircularProgressIndicator(),
           if (state.errorMessage != null)
             Card(
-              color: theme.colorScheme.errorContainer,
+              color: KizColors.error.withValues(alpha: 0.12),
               child: Padding(
                 padding: const EdgeInsets.all(16),
                 child: Row(
                   children: [
-                    Icon(Icons.error_outline,
-                        color: theme.colorScheme.onErrorContainer),
+                    const Icon(Icons.error_outline, color: KizColors.error),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(
                         state.errorMessage!,
-                        style: TextStyle(
-                            color: theme.colorScheme.onErrorContainer),
+                        style: const TextStyle(color: KizColors.error),
                       ),
                     ),
                   ],
@@ -115,7 +116,7 @@ class _CheckInOutTabState extends ConsumerState<CheckInOutTab> {
     final isCheckIn = status == 'checked_in';
 
     return Card(
-      color: theme.colorScheme.primaryContainer,
+      color: KizColors.moss.withValues(alpha: 0.12),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -125,7 +126,7 @@ class _CheckInOutTabState extends ConsumerState<CheckInOutTab> {
               children: [
                 Icon(
                   isCheckIn ? Icons.check_circle : Icons.logout,
-                  color: theme.colorScheme.onPrimaryContainer,
+                  color: KizColors.moss,
                 ),
                 const SizedBox(width: 12),
                 Text(
@@ -133,27 +134,27 @@ class _CheckInOutTabState extends ConsumerState<CheckInOutTab> {
                       ? 'Check-In Successful'
                       : 'Check-Out Successful',
                   style: theme.textTheme.titleMedium?.copyWith(
-                    color: theme.colorScheme.onPrimaryContainer,
+                    color: KizColors.onBackground,
                   ),
                 ),
               ],
             ),
             const SizedBox(height: 12),
             if (app.studentName != null)
-              _infoRow('Student', app.studentName!),
+              _infoRow('Student', Text(app.studentName!)),
             if (app.assignedBlockName != null)
-              _infoRow('Block', app.assignedBlockName!),
+              _infoRow('Block', KizCodeTag(app.assignedBlockName!)),
             if (app.assignedRoomNumber != null)
-              _infoRow('Room', app.assignedRoomNumber!),
+              _infoRow('Room', KizCodeTag(app.assignedRoomNumber!)),
             if (app.assignedBedLabel != null)
-              _infoRow('Bed', app.assignedBedLabel!),
+              _infoRow('Bed', KizCodeTag(app.assignedBedLabel!)),
           ],
         ),
       ),
     );
   }
 
-  Widget _infoRow(String label, String value) {
+  Widget _infoRow(String label, Widget value) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 4),
       child: Row(
@@ -163,7 +164,7 @@ class _CheckInOutTabState extends ConsumerState<CheckInOutTab> {
             child: Text(label,
                 style: const TextStyle(fontWeight: FontWeight.w600)),
           ),
-          Text(value),
+          value,
         ],
       ),
     );

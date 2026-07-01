@@ -5,6 +5,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_core/shared_core.dart';
 
 import '../../../core/theme/kiz_theme.dart';
+import '../../../core/widgets/kiz_card.dart';
+import '../../../core/widgets/kiz_status.dart';
 import '../application/bookings_provider.dart';
 
 /// Main bookings screen with Facilities and My Bookings tabs.
@@ -128,67 +130,79 @@ class _FacilityCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
+    return KizCard(
       onTap: () => context.push('/bookings/facility/${facility.id}'),
-      child: Container(
-        padding: const EdgeInsets.all(KizSpacing.lg),
-        decoration: BoxDecoration(
-          color: KizColors.surface,
-          borderRadius: BorderRadius.circular(KizRadius.card),
-          border: Border.all(color: KizColors.cardBorder),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              facility.name,
-              style: GoogleFonts.leagueSpartan(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-                color: KizColors.onBackground,
-              ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            facility.name,
+            style: GoogleFonts.leagueSpartan(
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+              color: KizColors.onBackground,
             ),
-            if (facility.description != null) ...[
-              const SizedBox(height: KizSpacing.sm),
-              Text(
-                facility.description!,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: GoogleFonts.poppins(
-                  fontSize: 14,
-                  color: KizColors.onSurface,
-                ),
+          ),
+          if (facility.description != null) ...[
+            const SizedBox(height: KizSpacing.sm),
+            Text(
+              facility.description!,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: GoogleFonts.poppins(
+                fontSize: 14,
+                color: KizColors.onSurface,
               ),
-            ],
-            const SizedBox(height: KizSpacing.md),
-            Row(
-              children: [
-                Icon(Icons.people_outline,
-                    size: 16, color: KizColors.onSurface.withValues(alpha: 0.6)),
-                const SizedBox(width: KizSpacing.xs),
-                Text(
-                  'Capacity: ${facility.capacity}',
-                  style: GoogleFonts.poppins(
-                    fontSize: 13,
-                    color: KizColors.onSurface.withValues(alpha: 0.7),
-                  ),
-                ),
-                const SizedBox(width: KizSpacing.base),
-                Icon(Icons.schedule,
-                    size: 16, color: KizColors.onSurface.withValues(alpha: 0.6)),
-                const SizedBox(width: KizSpacing.xs),
-                Text(
-                  facility.approvalMode == 'auto'
-                      ? 'Auto-confirm'
-                      : 'Requires approval',
-                  style: GoogleFonts.poppins(
-                    fontSize: 13,
-                    color: KizColors.onSurface.withValues(alpha: 0.7),
-                  ),
-                ),
-              ],
             ),
           ],
+          const SizedBox(height: KizSpacing.md),
+          Row(
+            children: [
+              Icon(Icons.people_outline,
+                  size: 16, color: KizColors.onSurface.withValues(alpha: 0.6)),
+              const SizedBox(width: KizSpacing.xs),
+              Text(
+                'Capacity: ${facility.capacity}',
+                style: GoogleFonts.poppins(
+                  fontSize: 13,
+                  color: KizColors.onSurface.withValues(alpha: 0.7),
+                ),
+              ),
+              const SizedBox(width: KizSpacing.base),
+              _ApprovalModeTag(
+                label: facility.approvalMode == 'auto'
+                    ? 'Auto-confirm'
+                    : 'Requires approval',
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Quiet metadata chip for facility approval mode — cork-tinted, not a
+/// status indicator (see [KizStatusTab] for actual statuses).
+class _ApprovalModeTag extends StatelessWidget {
+  const _ApprovalModeTag({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: KizColors.cork.withValues(alpha: 0.18),
+        borderRadius: BorderRadius.circular(4),
+      ),
+      child: Text(
+        label,
+        style: GoogleFonts.poppins(
+          fontSize: 12,
+          fontWeight: FontWeight.w500,
+          color: KizColors.onSurface.withValues(alpha: 0.8),
         ),
       ),
     );
@@ -263,16 +277,12 @@ class _BookingTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () => context.push('/bookings/${booking.id}'),
-      child: Container(
-        margin: const EdgeInsets.only(bottom: KizSpacing.md),
-        padding: const EdgeInsets.all(KizSpacing.lg),
-        decoration: BoxDecoration(
-          color: KizColors.surface,
-          borderRadius: BorderRadius.circular(KizRadius.card),
-          border: Border.all(color: KizColors.cardBorder),
-        ),
+    final (kind, label) = KizStatusMapper.booking(booking.status);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: KizSpacing.md),
+      child: KizCard(
+        spineKind: kind,
+        onTap: () => context.push('/bookings/${booking.id}'),
         child: Row(
           children: [
             Expanded(
@@ -298,7 +308,7 @@ class _BookingTile extends StatelessWidget {
                 ],
               ),
             ),
-            _StatusBadge(status: booking.status),
+            KizStatusTab(kind: kind, label: label),
           ],
         ),
       ),
@@ -309,47 +319,5 @@ class _BookingTile extends StatelessWidget {
     final day = date.day.toString().padLeft(2, '0');
     final month = date.month.toString().padLeft(2, '0');
     return '$day/$month/${date.year}';
-  }
-}
-
-class _StatusBadge extends StatelessWidget {
-  const _StatusBadge({required this.status});
-
-  final String status;
-
-  @override
-  Widget build(BuildContext context) {
-    final (color, label) = _statusConfig(status);
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: KizSpacing.sm,
-        vertical: KizSpacing.xs,
-      ),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(KizRadius.button),
-        border: Border.all(color: color.withValues(alpha: 0.4)),
-      ),
-      child: Text(
-        label,
-        style: GoogleFonts.poppins(
-          fontSize: 11,
-          fontWeight: FontWeight.w600,
-          color: color,
-        ),
-      ),
-    );
-  }
-
-  (Color, String) _statusConfig(String status) {
-    return switch (status) {
-      'pending' => (Colors.orange, 'Pending'),
-      'confirmed' => (Colors.green, 'Confirmed'),
-      'cancelled' => (Colors.grey, 'Cancelled'),
-      'completed' => (const Color(0xFF3B82F6), 'Completed'),
-      'no_show' => (Colors.red, 'No Show'),
-      'rejected' => (Colors.red, 'Rejected'),
-      _ => (KizColors.onSurface, status),
-    };
   }
 }

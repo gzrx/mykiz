@@ -6,6 +6,8 @@ import 'package:shared_core/shared_core.dart';
 
 import '../../../core/router/app_router.dart';
 import '../../../core/theme/kiz_theme.dart';
+import '../../../core/widgets/kiz_card.dart';
+import '../../../core/widgets/kiz_status.dart';
 import '../application/complaints_provider.dart';
 
 /// Screen displaying the student's own complaints with status indicators.
@@ -103,10 +105,7 @@ class _ComplaintsListScreenState extends ConsumerState<ComplaintsListScreen> {
               const SizedBox(height: KizSpacing.base),
               Text(
                 'No complaints yet',
-                style: GoogleFonts.poppins(
-                  fontSize: 16,
-                  color: KizColors.onSurface,
-                ),
+                style: KizFonts.display(fontSize: 22),
               ),
               const SizedBox(height: KizSpacing.sm),
               Text(
@@ -146,71 +145,64 @@ class _ComplaintListTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
+    final (kind, _) = KizStatusMapper.complaint(complaint.status);
+    return KizCard(
+      spineKind: kind,
       onTap: () => context.push('${AppRoutes.complaints}/${complaint.id}'),
-      child: Container(
-        padding: const EdgeInsets.all(KizSpacing.lg),
-        decoration: BoxDecoration(
-          color: KizColors.surface,
-          borderRadius: BorderRadius.circular(KizRadius.card),
-          border: Border.all(color: KizColors.cardBorder),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Top row: status badge and date
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                _StatusBadge(status: complaint.status),
-                Text(
-                  _formatDate(complaint.createdAt),
-                  style: GoogleFonts.poppins(
-                    fontSize: 12,
-                    color: KizColors.onSurface.withValues(alpha: 0.6),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: KizSpacing.md),
-
-            // Description snippet (max 2 lines)
-            Text(
-              complaint.description,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: GoogleFonts.poppins(
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-                color: KizColors.onBackground,
-              ),
-            ),
-            const SizedBox(height: KizSpacing.sm),
-
-            // Location
-            Row(
-              children: [
-                Icon(
-                  Icons.location_on_outlined,
-                  size: 16,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Top row: date (status is now shown via the card spine)
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              Text(
+                _formatDate(complaint.createdAt),
+                style: GoogleFonts.poppins(
+                  fontSize: 12,
                   color: KizColors.onSurface.withValues(alpha: 0.6),
                 ),
-                const SizedBox(width: KizSpacing.xs),
-                Expanded(
-                  child: Text(
-                    complaint.location,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: GoogleFonts.poppins(
-                      fontSize: 13,
-                      color: KizColors.onSurface.withValues(alpha: 0.7),
-                    ),
+              ),
+            ],
+          ),
+          const SizedBox(height: KizSpacing.md),
+
+          // Description snippet (max 2 lines)
+          Text(
+            complaint.description,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: GoogleFonts.poppins(
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+              color: KizColors.onBackground,
+            ),
+          ),
+          const SizedBox(height: KizSpacing.sm),
+
+          // Location
+          Row(
+            children: [
+              Icon(
+                Icons.location_on_outlined,
+                size: 16,
+                color: KizColors.onSurface.withValues(alpha: 0.6),
+              ),
+              const SizedBox(width: KizSpacing.xs),
+              Expanded(
+                child: Text(
+                  complaint.location,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.poppins(
+                    fontSize: 13,
+                    color: KizColors.onSurface.withValues(alpha: 0.7),
                   ),
                 ),
-              ],
-            ),
-          ],
-        ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
@@ -220,46 +212,5 @@ class _ComplaintListTile extends StatelessWidget {
     final month = date.month.toString().padLeft(2, '0');
     final year = date.year;
     return '$day/$month/$year';
-  }
-}
-
-/// Color-coded status badge widget.
-class _StatusBadge extends StatelessWidget {
-  const _StatusBadge({required this.status});
-
-  final String status;
-
-  @override
-  Widget build(BuildContext context) {
-    final (color, label) = _statusConfig(status);
-
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: KizSpacing.sm,
-        vertical: KizSpacing.xs,
-      ),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(KizRadius.button),
-        border: Border.all(color: color.withValues(alpha: 0.4)),
-      ),
-      child: Text(
-        label,
-        style: GoogleFonts.poppins(
-          fontSize: 11,
-          fontWeight: FontWeight.w600,
-          color: color,
-        ),
-      ),
-    );
-  }
-
-  (Color, String) _statusConfig(String status) {
-    return switch (status) {
-      'submitted' => (Colors.orange, 'Submitted'),
-      'in_progress' => (KizColors.secondary, 'In Progress'),
-      'resolved' => (Colors.green, 'Resolved'),
-      _ => (KizColors.onSurface, status),
-    };
   }
 }

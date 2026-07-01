@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../core/theme/kiz_theme.dart';
+import '../../../core/widgets/kiz_status.dart';
 import '../application/complaints_provider.dart';
 
 /// Read-only detail screen for a single complaint.
@@ -85,6 +86,9 @@ class _ComplaintDetailScreenState extends ConsumerState<ComplaintDetailScreen> {
       return const Center(child: Text('Complaint not found'));
     }
 
+    final (statusKind, statusLabel) =
+        KizStatusMapper.complaint(complaint.status);
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(KizSpacing.base),
       child: Column(
@@ -101,7 +105,7 @@ class _ComplaintDetailScreenState extends ConsumerState<ComplaintDetailScreen> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                _StatusBadge(status: complaint.status),
+                KizStatusTab(kind: statusKind, label: statusLabel),
                 Text(
                   _formatDateTime(complaint.createdAt),
                   style: GoogleFonts.poppins(
@@ -268,46 +272,5 @@ class _ComplaintImage extends ConsumerWidget {
         ),
       ),
     );
-  }
-}
-
-/// Color-coded status badge widget.
-class _StatusBadge extends StatelessWidget {
-  const _StatusBadge({required this.status});
-
-  final String status;
-
-  @override
-  Widget build(BuildContext context) {
-    final (color, label) = _statusConfig(status);
-
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: KizSpacing.md,
-        vertical: KizSpacing.sm,
-      ),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(KizRadius.button),
-        border: Border.all(color: color.withValues(alpha: 0.4)),
-      ),
-      child: Text(
-        label,
-        style: GoogleFonts.poppins(
-          fontSize: 12,
-          fontWeight: FontWeight.w600,
-          color: color,
-        ),
-      ),
-    );
-  }
-
-  (Color, String) _statusConfig(String status) {
-    return switch (status) {
-      'submitted' => (Colors.orange, 'Submitted'),
-      'in_progress' => (KizColors.secondary, 'In Progress'),
-      'resolved' => (Colors.green, 'Resolved'),
-      _ => (KizColors.onSurface, status),
-    };
   }
 }

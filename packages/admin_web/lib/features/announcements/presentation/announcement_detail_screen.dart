@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/router/app_router.dart';
 import '../../../core/theme/kiz_theme.dart';
+import '../../../core/widgets/widgets.dart';
 import '../application/announcements_provider.dart';
 
 /// Announcement detail screen showing full content with edit/delete actions.
@@ -162,56 +163,58 @@ class _AnnouncementDetailScreenState
       padding: const EdgeInsets.all(KizSpacing.xl),
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 800),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Title
-            Text(
-              announcement.title,
-              style: theme.textTheme.displaySmall,
-            ),
-            const SizedBox(height: KizSpacing.base),
+        child: KizCard(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Title
+              Text(
+                announcement.title,
+                style: KizFonts.display(fontSize: 28),
+              ),
+              const SizedBox(height: KizSpacing.base),
 
-            // Metadata
-            Row(
-              children: [
-                Icon(
-                  Icons.calendar_today_outlined,
-                  size: 16,
-                  color: KizColors.onSurface.withValues(alpha: 0.6),
-                ),
-                const SizedBox(width: KizSpacing.xs),
-                Text(
-                  'Created: ${_formatDate(announcement.createdAt)}',
-                  style: theme.textTheme.bodySmall?.copyWith(
+              // Metadata
+              Row(
+                children: [
+                  Icon(
+                    Icons.calendar_today_outlined,
+                    size: 16,
                     color: KizColors.onSurface.withValues(alpha: 0.6),
                   ),
-                ),
-                const SizedBox(width: KizSpacing.lg),
-                Icon(
-                  Icons.update_outlined,
-                  size: 16,
-                  color: KizColors.onSurface.withValues(alpha: 0.6),
-                ),
-                const SizedBox(width: KizSpacing.xs),
-                Text(
-                  'Updated: ${_formatDate(announcement.updatedAt)}',
-                  style: theme.textTheme.bodySmall?.copyWith(
+                  const SizedBox(width: KizSpacing.xs),
+                  Text(
+                    'Created: ${_formatDate(announcement.createdAt)}',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: KizColors.onSurface.withValues(alpha: 0.6),
+                    ),
+                  ),
+                  const SizedBox(width: KizSpacing.lg),
+                  Icon(
+                    Icons.update_outlined,
+                    size: 16,
                     color: KizColors.onSurface.withValues(alpha: 0.6),
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: KizSpacing.xl),
-            const Divider(),
-            const SizedBox(height: KizSpacing.xl),
+                  const SizedBox(width: KizSpacing.xs),
+                  Text(
+                    'Updated: ${_formatDate(announcement.updatedAt)}',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: KizColors.onSurface.withValues(alpha: 0.6),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: KizSpacing.xl),
+              const Divider(),
+              const SizedBox(height: KizSpacing.xl),
 
-            // Body
-            Text(
-              announcement.body,
-              style: theme.textTheme.bodyLarge,
-            ),
-          ],
+              // Body
+              Text(
+                announcement.body,
+                style: theme.textTheme.bodyLarge,
+              ),
+            ],
+          ),
         ),
       ),
     );

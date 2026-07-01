@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_core/shared_core.dart';
 
 import '../../../core/theme/kiz_theme.dart';
+import '../../../core/widgets/widgets.dart';
 import '../application/complaints_provider.dart';
 
 /// Detail screen for a single complaint.
@@ -119,7 +120,7 @@ class _ComplaintDetailScreenState extends ConsumerState<ComplaintDetailScreen> {
     ComplaintDetailState state,
     ThemeData theme,
   ) {
-    final (color, label) = _statusConfig(complaint.status);
+    final (kind, label) = KizStatusMapper.complaint(complaint.status);
     final nextStatus = _getNextStatus(complaint.status);
 
     return Card(
@@ -127,25 +128,7 @@ class _ComplaintDetailScreenState extends ConsumerState<ComplaintDetailScreen> {
         padding: const EdgeInsets.all(KizSpacing.base),
         child: Row(
           children: [
-            Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: KizSpacing.md,
-                vertical: KizSpacing.sm,
-              ),
-              decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(4),
-                border: Border.all(color: color.withValues(alpha: 0.4)),
-              ),
-              child: Text(
-                label,
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: color,
-                ),
-              ),
-            ),
+            KizStatusTab(kind: kind, label: label),
             const Spacer(),
             if (nextStatus != null)
               ElevatedButton(
@@ -306,15 +289,6 @@ class _ComplaintDetailScreenState extends ConsumerState<ComplaintDetailScreen> {
       'submitted' => 'Mark In Progress',
       'in_progress' => 'Mark Resolved',
       _ => '',
-    };
-  }
-
-  (Color, String) _statusConfig(String status) {
-    return switch (status) {
-      'submitted' => (const Color(0xFFD97706), 'Submitted'),
-      'in_progress' => (KizColors.secondary, 'In Progress'),
-      'resolved' => (const Color(0xFF16A34A), 'Resolved'),
-      _ => (KizColors.onSurface, status),
     };
   }
 

@@ -1,3 +1,6 @@
 /// Barrel file for shared KIZ UI widgets.
-///
-/// Add shared widget exports here as they are implemented.
+library;
+
+export 'kiz_card.dart';
+export 'kiz_code_tag.dart';
+export 'kiz_status.dart';

@@ -59,10 +59,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   Text(
                     'MyKIZ Siswa',
                     textAlign: TextAlign.center,
-                    style: GoogleFonts.leagueSpartan(
-                      fontSize: 32,
+                    style: KizFonts.display(
+                      fontSize: 34,
                       fontWeight: FontWeight.w700,
-                      color: KizColors.onBackground,
                     ),
                   ),
                   const SizedBox(height: KizSpacing.sm),

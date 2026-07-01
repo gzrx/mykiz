@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/widgets/widgets.dart';
 import '../application/accommodation_settings_provider.dart';
 
 /// Settings tab content with the application window toggle.
@@ -48,17 +49,20 @@ class _AccommodationSettingsTabState
                 ),
               ),
             ),
-          SwitchListTile(
-            title: const Text('Application Window'),
-            subtitle: Text(
-              state.isOpen
-                  ? 'Students can submit applications'
-                  : 'Applications are closed',
+          KizCard(
+            padding: EdgeInsets.zero,
+            child: SwitchListTile(
+              title: const Text('Application Window'),
+              subtitle: Text(
+                state.isOpen
+                    ? 'Students can submit applications'
+                    : 'Applications are closed',
+              ),
+              value: state.isOpen,
+              onChanged: (_) {
+                ref.read(accommodationSettingsProvider.notifier).toggle();
+              },
             ),
-            value: state.isOpen,
-            onChanged: (_) {
-              ref.read(accommodationSettingsProvider.notifier).toggle();
-            },
           ),
         ],
       ),

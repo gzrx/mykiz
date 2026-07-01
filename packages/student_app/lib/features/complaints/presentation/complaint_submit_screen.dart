@@ -298,12 +298,12 @@ class _ComplaintSubmitScreenState extends ConsumerState<ComplaintSubmitScreen> {
                   child: Container(
                     height: 120,
                     decoration: BoxDecoration(
-                      color: KizColors.surface,
+                      color: KizColors.cork.withValues(alpha: 0.08),
                       borderRadius: BorderRadius.circular(KizRadius.card),
                       border: Border.all(
                         color: _imageError != null
                             ? KizColors.error
-                            : KizColors.border,
+                            : KizColors.cork.withValues(alpha: 0.5),
                         style: BorderStyle.solid,
                       ),
                     ),
@@ -314,7 +314,7 @@ class _ComplaintSubmitScreenState extends ConsumerState<ComplaintSubmitScreen> {
                           Icon(
                             Icons.add_a_photo_outlined,
                             size: 32,
-                            color: KizColors.onSurface.withValues(alpha: 0.5),
+                            color: KizColors.cork,
                           ),
                           const SizedBox(height: KizSpacing.sm),
                           Text(

@@ -6,6 +6,9 @@ import 'package:qr_flutter/qr_flutter.dart';
 import 'package:shared_core/shared_core.dart';
 
 import '../../../core/theme/kiz_theme.dart';
+import '../../../core/widgets/kiz_card.dart';
+import '../../../core/widgets/kiz_code_tag.dart';
+import '../../../core/widgets/kiz_status.dart';
 import '../application/accommodation_provider.dart';
 
 /// Main accommodation screen showing application form + status cards + history.
@@ -104,11 +107,7 @@ class _AccommodationBody extends ConsumerWidget {
   Widget _buildSectionHeader(String title) {
     return Text(
       title,
-      style: GoogleFonts.leagueSpartan(
-        fontSize: 18,
-        fontWeight: FontWeight.w600,
-        color: KizColors.onBackground,
-      ),
+      style: KizFonts.display(fontSize: 20),
     );
   }
 }
@@ -229,6 +228,13 @@ class _SemesterFormState extends ConsumerState<_SemesterForm> {
               final selected = _selectedTags.contains(tag);
               return FilterChip(
                 label: Text(_tagLabel(tag)),
+                labelStyle: GoogleFonts.poppins(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: selected
+                      ? KizColors.onBackground
+                      : KizColors.onSurface,
+                ),
                 selected: selected,
                 onSelected: submission.isSubmitting
                     ? null
@@ -239,8 +245,17 @@ class _SemesterFormState extends ConsumerState<_SemesterForm> {
                             _selectedTags.remove(tag);
                           }
                         }),
-                selectedColor: KizColors.primary.withValues(alpha: 0.3),
+                backgroundColor: Colors.transparent,
+                selectedColor: KizColors.primary,
                 checkmarkColor: KizColors.onBackground,
+                side: BorderSide(
+                  color: selected
+                      ? KizColors.primary
+                      : KizColors.cork.withValues(alpha: 0.6),
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(KizRadius.button),
+                ),
               );
             }).toList(),
           ),
@@ -397,13 +412,8 @@ class _OutOfSemesterFormState extends ConsumerState<_OutOfSemesterForm> {
         const SizedBox(height: KizSpacing.base),
         // Cost summary
         if (_nights > 0) ...[
-          Container(
+          KizCard(
             padding: const EdgeInsets.all(KizSpacing.md),
-            decoration: BoxDecoration(
-              color: KizColors.surface,
-              borderRadius: BorderRadius.circular(KizRadius.card),
-              border: Border.all(color: KizColors.cardBorder),
-            ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -461,13 +471,9 @@ class _ApplicationStatusCard extends StatelessWidget {
     final typeLabel = application.applicationType == 'semester'
         ? 'Semester'
         : 'Out-of-Semester';
-    return Container(
-      padding: const EdgeInsets.all(KizSpacing.lg),
-      decoration: BoxDecoration(
-        color: KizColors.surface,
-        borderRadius: BorderRadius.circular(KizRadius.card),
-        border: Border.all(color: KizColors.cardBorder),
-      ),
+    final (kind, label) = KizStatusMapper.accommodation(application.status);
+    return KizCard(
+      spineKind: kind,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -479,22 +485,26 @@ class _ApplicationStatusCard extends StatelessWidget {
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
                       color: KizColors.onBackground)),
-              _buildStatusBadge(application.status),
+              KizStatusTab(kind: kind, label: label),
             ],
           ),
           const SizedBox(height: KizSpacing.md),
           _buildInfoRow(Icons.calendar_today_outlined,
               'Submitted ${_fmtDateGlobal(application.createdAt)}'),
           if (_showAssignment(application.status)) ...[
-            if (application.assignedBlockName != null)
-              _buildInfoRow(Icons.apartment_outlined,
-                  'Block ${application.assignedBlockName}'),
-            if (application.assignedRoomNumber != null)
-              _buildInfoRow(Icons.meeting_room_outlined,
-                  'Room ${application.assignedRoomNumber}'),
-            if (application.assignedBedLabel != null)
-              _buildInfoRow(
-                  Icons.bed_outlined, 'Bed ${application.assignedBedLabel}'),
+            const SizedBox(height: KizSpacing.sm),
+            Wrap(
+              spacing: KizSpacing.sm,
+              runSpacing: KizSpacing.sm,
+              children: [
+                if (application.assignedBlockName != null)
+                  KizCodeTag('Block ${application.assignedBlockName}'),
+                if (application.assignedRoomNumber != null)
+                  KizCodeTag('Room ${application.assignedRoomNumber}'),
+                if (application.assignedBedLabel != null)
+                  KizCodeTag('Bed ${application.assignedBedLabel}'),
+              ],
+            ),
           ],
           if (_showQrCode(application.status)) ...[
             const SizedBox(height: KizSpacing.lg),
@@ -543,13 +553,9 @@ class _ApplicationHistoryTile extends StatelessWidget {
     final typeLabel = application.applicationType == 'semester'
         ? 'Semester'
         : 'Out-of-Semester';
-    return Container(
-      padding: const EdgeInsets.all(KizSpacing.lg),
-      decoration: BoxDecoration(
-        color: KizColors.surface,
-        borderRadius: BorderRadius.circular(KizRadius.card),
-        border: Border.all(color: KizColors.cardBorder),
-      ),
+    final (kind, label) = KizStatusMapper.accommodation(application.status);
+    return KizCard(
+      spineKind: kind,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -561,7 +567,7 @@ class _ApplicationHistoryTile extends StatelessWidget {
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
                       color: KizColors.onBackground)),
-              _buildStatusBadge(application.status),
+              KizStatusTab(kind: kind, label: label),
             ],
           ),
           const SizedBox(height: KizSpacing.sm),
@@ -586,8 +592,15 @@ class _ApplicationHistoryTile extends StatelessWidget {
           if (application.status == 'checked_out' &&
               application.assignedBlockName != null) ...[
             const SizedBox(height: KizSpacing.sm),
-            _buildInfoRow(Icons.apartment_outlined,
-                'Block ${application.assignedBlockName}, Room ${application.assignedRoomNumber ?? "-"}'),
+            Wrap(
+              spacing: KizSpacing.sm,
+              runSpacing: KizSpacing.sm,
+              children: [
+                KizCodeTag('Block ${application.assignedBlockName}'),
+                KizCodeTag(
+                    'Room ${application.assignedRoomNumber ?? "-"}'),
+              ],
+            ),
           ],
         ],
       ),
@@ -718,31 +731,6 @@ Widget _buildInfoRow(IconData icon, String label) => Padding(
         ],
       ),
     );
-
-Widget _buildStatusBadge(String status) {
-  final (color, label) = _statusStyle(status);
-  return Container(
-    padding: const EdgeInsets.symmetric(
-        horizontal: KizSpacing.sm, vertical: 2),
-    decoration: BoxDecoration(
-      color: color.withValues(alpha: 0.1),
-      borderRadius: BorderRadius.circular(KizRadius.button),
-      border: Border.all(color: color.withValues(alpha: 0.4)),
-    ),
-    child: Text(label,
-        style: GoogleFonts.poppins(
-            fontSize: 11, fontWeight: FontWeight.w600, color: color)),
-  );
-}
-
-(Color, String) _statusStyle(String status) => switch (status) {
-      'submitted' => (KizColors.secondary, 'Submitted'),
-      'approved' => (const Color(0xFF10B981), 'Approved'),
-      'checked_in' => (const Color(0xFF8B5CF6), 'Checked In'),
-      'checked_out' => (KizColors.onSurface, 'Checked Out'),
-      'rejected' => (KizColors.error, 'Rejected'),
-      _ => (KizColors.onSurface, status),
-    };
 
 String _fmtDateGlobal(DateTime d) {
   final day = d.day.toString().padLeft(2, '0');

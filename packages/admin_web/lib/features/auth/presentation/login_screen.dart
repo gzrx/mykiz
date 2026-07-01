@@ -59,7 +59,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   height: 80,
                   decoration: BoxDecoration(
                     color: KizColors.primary,
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(KizRadius.card),
                   ),
                   child: const Icon(
                     Icons.apartment_rounded,
@@ -72,7 +72,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 // App title
                 Text(
                   'MyKIZ Admin',
-                  style: theme.textTheme.displaySmall,
+                  style: KizFonts.display(fontSize: 32),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: KizSpacing.sm),

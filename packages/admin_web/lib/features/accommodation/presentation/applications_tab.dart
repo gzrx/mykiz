@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_core/shared_core.dart';
 
 import '../../../core/theme/kiz_theme.dart';
+import '../../../core/widgets/widgets.dart';
 import '../application/applications_provider.dart';
 import '../data/accommodation_repository.dart';
 
@@ -133,14 +134,7 @@ class _FiltersRow extends ConsumerWidget {
     );
   }
 
-  String _formatStatus(String s) => switch (s) {
-        'submitted' => 'Submitted',
-        'approved' => 'Approved',
-        'checked_in' => 'Checked In',
-        'checked_out' => 'Checked Out',
-        'rejected' => 'Rejected',
-        _ => s,
-      };
+  String _formatStatus(String s) => KizStatusMapper.accommodation(s).$2;
 
   String _formatType(String t) => switch (t) {
         'semester' => 'Semester',
@@ -164,6 +158,17 @@ class _TagFilterChips extends ConsumerWidget {
           FilterChip(
             label: Text(_tagLabel(tag)),
             selected: selectedTags.contains(tag.dbValue),
+            showCheckmark: false,
+            backgroundColor: Colors.transparent,
+            selectedColor: KizColors.primary,
+            side: BorderSide(
+              color: selectedTags.contains(tag.dbValue)
+                  ? KizColors.primary
+                  : KizColors.cork,
+            ),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(4),
+            ),
             onSelected: (selected) {
               final updated = List<String>.from(selectedTags);
               if (selected) {
@@ -221,7 +226,7 @@ class _ApplicationsTable extends ConsumerWidget {
               DataRow(cells: [
                 DataCell(Text(app.studentName ?? '—')),
                 DataCell(Text(_formatType(app.applicationType))),
-                DataCell(Text(_formatStatus(app.status))),
+                DataCell(_buildStatusCell(app.status)),
                 DataCell(_TagChips(tags: app.lifestyleTags)),
                 DataCell(Text(_formatDate(app.createdAt))),
                 DataCell(_ActionButtons(application: app)),
@@ -238,14 +243,10 @@ class _ApplicationsTable extends ConsumerWidget {
         _ => t,
       };
 
-  String _formatStatus(String s) => switch (s) {
-        'submitted' => 'Submitted',
-        'approved' => 'Approved',
-        'checked_in' => 'Checked In',
-        'checked_out' => 'Checked Out',
-        'rejected' => 'Rejected',
-        _ => s,
-      };
+  Widget _buildStatusCell(String status) {
+    final (kind, label) = KizStatusMapper.accommodation(status);
+    return KizStatusTab(kind: kind, label: label);
+  }
 
   String _formatDate(DateTime dt) =>
       '${dt.day.toString().padLeft(2, '0')}/${dt.month.toString().padLeft(2, '0')}/${dt.year}';
@@ -268,6 +269,11 @@ class _TagChips extends StatelessWidget {
             label: Text(
               _tagLabel(tag),
               style: const TextStyle(fontSize: 11),
+            ),
+            backgroundColor: Colors.transparent,
+            side: const BorderSide(color: KizColors.cork),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(4),
             ),
             padding: EdgeInsets.zero,
             materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,

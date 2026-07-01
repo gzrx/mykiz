@@ -4,6 +4,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_core/shared_core.dart';
 
 import '../../../core/theme/kiz_theme.dart';
+import '../../../core/widgets/kiz_code_tag.dart';
+import '../../../core/widgets/kiz_status.dart';
 import '../application/bookings_provider.dart';
 
 /// Screen showing full booking details with cancel action.
@@ -31,7 +33,7 @@ class BookingDetailScreen extends ConsumerWidget {
       appBar: AppBar(
         title: Text(
           'Booking Details',
-          style: GoogleFonts.leagueSpartan(fontWeight: FontWeight.w600),
+          style: KizFonts.display(fontSize: 20, color: Colors.white),
         ),
       ),
       body: Padding(
@@ -40,11 +42,26 @@ class BookingDetailScreen extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Reference
-            _DetailRow(label: 'Reference', value: booking.bookingReference),
-            _DetailRow(label: 'Status', value: _statusLabel(booking.status)),
+            _DetailRow(
+              label: 'Reference',
+              valueWidget: KizCodeTag(booking.bookingReference),
+            ),
+            _DetailRow(
+              label: 'Status',
+              valueWidget: Builder(builder: (context) {
+                final (kind, label) = KizStatusMapper.booking(booking.status);
+                return KizStatusTab(kind: kind, label: label);
+              }),
+            ),
             _DetailRow(label: 'Date', value: _formatDate(booking.bookingDate)),
-            _DetailRow(label: 'Facility ID', value: booking.facilityId),
-            _DetailRow(label: 'Slot ID', value: booking.slotConfigId),
+            _DetailRow(
+              label: 'Facility ID',
+              valueWidget: KizCodeTag(booking.facilityId),
+            ),
+            _DetailRow(
+              label: 'Slot ID',
+              valueWidget: KizCodeTag(booking.slotConfigId),
+            ),
             if (booking.rejectionReason != null)
               _DetailRow(label: 'Rejection Reason', value: booking.rejectionReason!),
             const Spacer(),
@@ -80,18 +97,6 @@ class BookingDetailScreen extends ConsumerWidget {
     // Can cancel if confirmed and booking date is in the future (simplified 2h rule
     // ponytail: exact 2h check needs slot start time; simplified to just confirmed/pending status
     return booking.status == 'confirmed' || booking.status == 'pending';
-  }
-
-  String _statusLabel(String status) {
-    return switch (status) {
-      'pending' => 'Pending',
-      'confirmed' => 'Confirmed',
-      'cancelled' => 'Cancelled',
-      'completed' => 'Completed',
-      'no_show' => 'No Show',
-      'rejected' => 'Rejected',
-      _ => status,
-    };
   }
 
   String _formatDate(DateTime date) {
@@ -139,10 +144,18 @@ class BookingDetailScreen extends ConsumerWidget {
 }
 
 class _DetailRow extends StatelessWidget {
-  const _DetailRow({required this.label, required this.value});
+  const _DetailRow({required this.label, this.value, this.valueWidget})
+      : assert(
+          value != null || valueWidget != null,
+          'Either value or valueWidget must be provided',
+        );
 
   final String label;
-  final String value;
+  final String? value;
+
+  /// Optional widget to render in place of a plain [value] string — used
+  /// for codes ([KizCodeTag]) and status ([KizStatusTab]).
+  final Widget? valueWidget;
 
   @override
   Widget build(BuildContext context) {
@@ -162,14 +175,15 @@ class _DetailRow extends StatelessWidget {
             ),
           ),
           Expanded(
-            child: Text(
-              value,
-              style: GoogleFonts.poppins(
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-                color: KizColors.onBackground,
-              ),
-            ),
+            child: valueWidget ??
+                Text(
+                  value!,
+                  style: GoogleFonts.poppins(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    color: KizColors.onBackground,
+                  ),
+                ),
           ),
         ],
       ),

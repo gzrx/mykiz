@@ -85,13 +85,13 @@ class _ModuleTileState extends ConsumerState<ModuleTile> {
                 vertical: 2,
               ),
               decoration: BoxDecoration(
-                color: KizColors.error,
+                color: KizColors.primary,
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Text(
                 _badgeText!,
                 style: const TextStyle(
-                  color: Colors.white,
+                  color: KizColors.onBackground,
                   fontSize: 10,
                   fontWeight: FontWeight.bold,
                 ),

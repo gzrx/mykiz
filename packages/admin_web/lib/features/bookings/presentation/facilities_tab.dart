@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_core/shared_core.dart';
 
 import '../../../core/theme/kiz_theme.dart';
+import '../../../core/widgets/widgets.dart';
 import '../application/bookings_provider.dart';
 import '../data/bookings_repository.dart';
 
@@ -83,7 +84,10 @@ class _FacilityCard extends ConsumerWidget {
               .toggleActive(facility.id, isActive: v),
         ),
         children: [
-          Padding(
+          Container(
+            decoration: const BoxDecoration(
+              border: Border(top: BorderSide(color: KizColors.border)),
+            ),
             padding: const EdgeInsets.all(KizSpacing.base),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -158,7 +162,15 @@ class _SlotConfigsListState extends ConsumerState<_SlotConfigsList> {
           ..._slots!.map((slot) => ListTile(
                 dense: true,
                 title: Text('${slot.startTime} – ${slot.endTime}'),
-                subtitle: Text(slot.isActive ? 'Active' : 'Inactive'),
+                subtitle: Align(
+                  alignment: Alignment.centerLeft,
+                  child: KizStatusTab(
+                    kind: slot.isActive
+                        ? KizStatusKind.active
+                        : KizStatusKind.done,
+                    label: slot.isActive ? 'Active' : 'Inactive',
+                  ),
+                ),
                 trailing: IconButton(
                   icon: const Icon(Icons.delete_outline, size: 20),
                   onPressed: () async {

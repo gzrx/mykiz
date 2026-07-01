@@ -24,7 +24,7 @@ class BrandingHeader extends ConsumerWidget {
         children: [
           Text(
             greeting,
-            style: Theme.of(context).textTheme.headlineSmall,
+            style: KizFonts.display(fontSize: 20, fontWeight: FontWeight.w600),
           ),
           // ponytail: text-based logo fallback — no asset file exists yet.
           // Upgrade path: replace with Image.asset('assets/logo.png', semanticLabel: 'MyKIZ logo')
@@ -34,10 +34,11 @@ class BrandingHeader extends ConsumerWidget {
             child: ExcludeSemantics(
               child: Text(
                 'MyKIZ',
-                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      color: KizColors.primary,
-                      fontWeight: FontWeight.bold,
-                    ),
+                style: KizFonts.display(
+                  fontSize: 24,
+                  fontWeight: FontWeight.w700,
+                  color: KizColors.primary,
+                ),
               ),
             ),
           ),
