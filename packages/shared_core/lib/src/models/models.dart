@@ -13,4 +13,5 @@ export 'facility.dart';
 export 'facility_slot_config.dart';
 export 'lifestyle_tag.dart';
 export 'room.dart';
+export 'room_occupancy.dart';
 export 'user.dart';

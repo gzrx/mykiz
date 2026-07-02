@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:shared_core/shared_core.dart';
 
 import '../../../core/theme/kiz_theme.dart';
 import '../../../core/widgets/widgets.dart';
@@ -154,7 +153,7 @@ class _RoomsPanel extends StatelessWidget {
               DataCell(KizCodeTag(room.roomNumber)),
               DataCell(Text(_formatRoomType(room.roomType))),
               DataCell(Text(
-                _bedsFilled(room),
+                '${room.occupied}/${room.total} beds filled',
                 style: KizFonts.mono(),
               )),
             ]),
@@ -168,10 +167,4 @@ class _RoomsPanel extends StatelessWidget {
         'twin_sharing' => 'Twin Sharing',
         _ => type,
       };
-
-  String _bedsFilled(Room room) {
-    final total = room.beds.length;
-    final occupied = room.beds.where((b) => b.isOccupied).length;
-    return '$occupied/$total beds filled';
-  }
 }

@@ -111,7 +111,9 @@ void main() {
 
           // Compute expected per the defined redirect logic
           final String? expected;
-          if (status == AuthStatus.loading) {
+          if (status == AuthStatus.unknown) {
+            expected = null;
+          } else if (status == AuthStatus.loading) {
             expected = null;
           } else if (status == AuthStatus.authenticated &&
               route == '/login') {

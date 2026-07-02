@@ -17,7 +17,7 @@ class OccupancyState {
 
   final List<Block> blocks;
   final String? selectedBlockId;
-  final List<Room> rooms;
+  final List<RoomOccupancy> rooms;
   final bool isLoadingBlocks;
   final bool isLoadingRooms;
   final String? errorMessage;
@@ -25,7 +25,7 @@ class OccupancyState {
   OccupancyState copyWith({
     List<Block>? blocks,
     String? selectedBlockId,
-    List<Room>? rooms,
+    List<RoomOccupancy>? rooms,
     bool? isLoadingBlocks,
     bool? isLoadingRooms,
     String? errorMessage,
