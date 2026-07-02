@@ -470,7 +470,7 @@ Future<void> runSeed(Session connection) async {
       Sql.named(
         'INSERT INTO bookings '
         '(id, booking_reference, student_id, facility_id, slot_config_id, booking_date, status) '
-        'VALUES (@id, @ref, @sid, @fid, @slot, CURRENT_DATE + @off, @status) '
+        'VALUES (@id, @ref, @sid, @fid, @slot, CURRENT_DATE + @off::int, @status) '
         'ON CONFLICT (id) DO NOTHING',
       ),
       parameters: {
