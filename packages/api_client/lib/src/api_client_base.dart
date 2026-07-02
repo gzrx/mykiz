@@ -809,7 +809,7 @@ class MyKizApiClient {
     final response = await _request<Map<String, dynamic>>(
       () => _dio.get<Map<String, dynamic>>(
         '/api/v1/admin/bookings/summary',
-        queryParameters: {'from': from, 'to': to},
+        queryParameters: {'fromDate': from, 'toDate': to},
       ),
     );
     return response['data'] as Map<String, dynamic>;
