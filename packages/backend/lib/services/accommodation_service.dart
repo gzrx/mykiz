@@ -928,10 +928,13 @@ class AccommodationService {
       roomTypePreference: row[4] as String?,
       preferredBlockId: row[5] as String?,
       lifestyleTags: (row[6] as List?)?.cast<String>() ?? [],
-      checkInDate: row[7] != null ? row[7] as DateTime : null,
-      checkOutDate: row[8] != null ? row[8] as DateTime : null,
-      nightlyRate: row[9] != null ? (row[9] as num).toDouble() : null,
-      totalCost: row[10] != null ? (row[10] as num).toDouble() : null,
+      // NUMERIC and DATE columns can come back as driver-specific types
+      // (e.g. numeric as String). Parse defensively so a non-null rate/date
+      // (as on out_of_semester applications) never crashes the list query.
+      checkInDate: row[7] != null ? DateTime.parse(row[7].toString()) : null,
+      checkOutDate: row[8] != null ? DateTime.parse(row[8].toString()) : null,
+      nightlyRate: row[9] != null ? double.tryParse(row[9].toString()) : null,
+      totalCost: row[10] != null ? double.tryParse(row[10].toString()) : null,
       assignedBlockId: row[11] as String?,
       assignedRoomId: row[12] as String?,
       assignedBedId: row[13] as String?,
