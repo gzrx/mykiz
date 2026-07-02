@@ -44,6 +44,7 @@ class _AppShellState extends State<AppShell> {
               padding: const EdgeInsets.symmetric(vertical: KizSpacing.sm),
               child: IconButton(
                 tooltip: 'Toggle sidebar',
+                color: KizColors.background,
                 icon: Icon(_extended ? Icons.menu_open : Icons.menu),
                 onPressed: () => setState(() => _extended = !_extended),
               ),

@@ -314,9 +314,20 @@ class KizTheme {
       ),
       navigationRailTheme: NavigationRailThemeData(
         backgroundColor: KizColors.navigationBar,
-        selectedIconTheme: const IconThemeData(color: KizColors.background),
+        indicatorColor: KizColors.primary,
+        selectedIconTheme: const IconThemeData(color: KizColors.onBackground),
         unselectedIconTheme:
-            IconThemeData(color: KizColors.background.withValues(alpha: 0.7)),
+            const IconThemeData(color: KizColors.background),
+        selectedLabelTextStyle: GoogleFonts.poppins(
+          fontSize: 14,
+          fontWeight: FontWeight.w600,
+          color: KizColors.onBackground,
+        ),
+        unselectedLabelTextStyle: GoogleFonts.poppins(
+          fontSize: 14,
+          fontWeight: FontWeight.w500,
+          color: KizColors.background.withValues(alpha: 0.85),
+        ),
       ),
     );
   }
