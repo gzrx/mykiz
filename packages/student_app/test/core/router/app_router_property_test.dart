@@ -46,12 +46,17 @@ void main() {
   // -- Property 1: Router redirect determinism --
   // **Validates: Requirements 1.1, 1.2, 1.3, 1.4**
   group('Property 1: Router redirect determinism', () {
-    test('loading status always returns null (no redirect)', () {
+    test('loading is gated like unauthenticated (/login stays, else /login)',
+        () {
+      // Regression: `loading` must not pass through protected routes, or the
+      // router (rebuilt on each auth change, reset to /dashboard) would build
+      // the dashboard pre-token and fire tokenless 401s.
       for (var i = 0; i < 100; i++) {
         final route = _randomRoutePath(random);
         final result = computeRedirect(AuthStatus.loading, route);
-        expect(result, isNull,
-            reason: 'Loading + route "$route" should produce no redirect');
+        final expected = route == '/login' ? null : '/login';
+        expect(result, expected,
+            reason: 'Loading + route "$route" should redirect to $expected');
       }
     });
 
@@ -117,18 +122,16 @@ void main() {
         final String? expected;
         if (status == AuthStatus.unknown) {
           expected = null;
-        } else if (status == AuthStatus.loading) {
-          expected = null;
         } else if (status == AuthStatus.authenticated &&
             route == '/login') {
           expected = '/dashboard';
         } else if (status == AuthStatus.authenticated) {
           expected = null;
-        } else if (status == AuthStatus.unauthenticated &&
-            route == '/login') {
+        } else if (route == '/login') {
+          // unauthenticated or loading, already on /login
           expected = null;
         } else {
-          // unauthenticated + non-login
+          // unauthenticated or loading, on a protected route
           expected = '/login';
         }
 

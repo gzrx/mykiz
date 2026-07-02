@@ -17,8 +17,15 @@ void main() {
         '/login',
       );
     });
-    test('loading stays', () {
+    test('loading on /login stays', () {
       expect(computeRedirect(AuthStatus.loading, '/login'), isNull);
+    });
+    test('loading on /dashboard -> /login (no pre-token dashboard flash)', () {
+      // Regression: during login the router rebuilds and resets to its
+      // initialLocation (/dashboard). If `loading` passed through, the
+      // dashboard would build before the token is set and its module tiles
+      // would fire tokenless 401s (announcements/accommodation bugs).
+      expect(computeRedirect(AuthStatus.loading, '/dashboard'), '/login');
     });
     test('authenticated on /login -> /dashboard', () {
       expect(

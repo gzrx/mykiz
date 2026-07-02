@@ -73,7 +73,21 @@ void main() {
   });
 
   group('AnnouncementsListNotifier', () {
-    test('loads announcements on creation', () async {
+    test('does not fetch on creation (screen triggers load)', () async {
+      final notifier = AnnouncementsListNotifier(repository);
+      await Future<void>.delayed(Duration.zero);
+
+      // No load fires from the constructor — the screen calls
+      // loadAnnouncements() post-auth (mirrors complaints).
+      expect(notifier.state.announcements, isEmpty);
+      expect(notifier.state.isLoading, false);
+      verifyNever(() => mockApiClient.listAnnouncements(
+            page: any(named: 'page'),
+            limit: any(named: 'limit'),
+          ));
+    });
+
+    test('loadAnnouncements populates state', () async {
       when(() => mockApiClient.listAnnouncements(
             page: any(named: 'page'),
             limit: any(named: 'limit'),
@@ -83,9 +97,7 @@ void main() {
           ));
 
       final notifier = AnnouncementsListNotifier(repository);
-
-      // Wait for the async load to complete.
-      await Future<void>.delayed(Duration.zero);
+      await notifier.loadAnnouncements();
 
       expect(notifier.state.announcements, sampleAnnouncements);
       expect(notifier.state.isLoading, false);
@@ -105,8 +117,7 @@ void main() {
       ));
 
       final notifier = AnnouncementsListNotifier(repository);
-
-      await Future<void>.delayed(Duration.zero);
+      await notifier.loadAnnouncements();
 
       expect(notifier.state.announcements, isEmpty);
       expect(notifier.state.isLoading, false);
@@ -123,14 +134,14 @@ void main() {
           ));
 
       final notifier = AnnouncementsListNotifier(repository);
-      await Future<void>.delayed(Duration.zero);
+      await notifier.loadAnnouncements();
 
       // Refresh
       await notifier.refresh();
 
       expect(notifier.state.announcements, sampleAnnouncements);
       expect(notifier.state.currentPage, 1);
-      // Called twice: once on creation, once on refresh
+      // Called twice: initial load + refresh
       verify(() => mockApiClient.listAnnouncements(page: 1, limit: 20))
           .called(2);
     });
@@ -178,7 +189,7 @@ void main() {
       });
 
       final notifier = AnnouncementsListNotifier(repository);
-      await Future<void>.delayed(Duration.zero);
+      await notifier.loadAnnouncements();
 
       expect(notifier.state.hasMore, true);
 
@@ -200,7 +211,7 @@ void main() {
           ));
 
       final notifier = AnnouncementsListNotifier(repository);
-      await Future<void>.delayed(Duration.zero);
+      await notifier.loadAnnouncements();
 
       expect(notifier.state.hasMore, false);
 

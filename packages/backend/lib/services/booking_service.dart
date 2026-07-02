@@ -1,3 +1,4 @@
+import 'package:postgres/postgres.dart' show Time;
 import 'package:shared_core/shared_core.dart';
 
 import 'booking_exception.dart';
@@ -185,8 +186,8 @@ class BookingService {
     );
 
     for (final row in existing) {
-      final existStart = (row[0] as String).substring(0, 5); // HH:MM
-      final existEnd = (row[1] as String).substring(0, 5);
+      final existStart = _formatSlotTime(row[0] as Object); // HH:MM
+      final existEnd = _formatSlotTime(row[1] as Object);
       if (slotsOverlap(startTime, endTime, existStart, existEnd)) {
         throw const BookingException(
           code: 'SLOT_OVERLAP',
@@ -390,8 +391,8 @@ class BookingService {
     final results = <SlotAvailability>[];
     for (final row in slots) {
       final slotId = row[0] as String;
-      final startTime = (row[1] as String).substring(0, 5);
-      final endTime = (row[2] as String).substring(0, 5);
+      final startTime = _formatSlotTime(row[1] as Object);
+      final endTime = _formatSlotTime(row[2] as Object);
 
       final booked = countMap[slotId] ?? 0;
       final isBlocked = blockedSet.contains(slotId);
@@ -475,7 +476,7 @@ class BookingService {
         statusCode: 404,
       );
     }
-    final slotStartTime = (slotResult.first[1] as String).substring(0, 5);
+    final slotStartTime = _formatSlotTime(slotResult.first[1] as Object);
 
     // 3. Check date is not past and slot start hasn't passed today
     final now = DateTime.now();
@@ -632,7 +633,7 @@ class BookingService {
     } else if (status == 'confirmed') {
       // Check > 2h before slot start
       final bookingDate = row[5] as DateTime;
-      final slotStartStr = (row[11] as String).substring(0, 5); // HH:MM
+      final slotStartStr = _formatSlotTime(row[11] as Object); // HH:MM
       final parts = slotStartStr.split(':');
       final slotStart = DateTime(
         bookingDate.year, bookingDate.month, bookingDate.day,
@@ -1012,7 +1013,7 @@ class BookingService {
         statusCode: 404,
       );
     }
-    final startTimeStr = (slotResult.first[1] as String).substring(0, 5);
+    final startTimeStr = _formatSlotTime(slotResult.first[1] as Object);
     final parts = startTimeStr.split(':');
     final slotStart = DateTime(
       today.year, today.month, today.day,
@@ -1189,6 +1190,22 @@ class BookingService {
 
   // ─── Helpers ───────────────────────────────────────────────────────────
 
+  /// Formats a PostgreSQL `TIME` column value to an `HH:MM` string.
+  ///
+  /// The postgres driver decodes `time` columns to a [Time] object (whose
+  /// `toString()` is `Time(HH:MM:SS.ffffff)`), not a `String`. Casting the
+  /// value directly to `String` throws and 500s the request, so accept the
+  /// driver's [Time] type and fall back to raw-string handling defensively.
+  static String _formatSlotTime(Object value) {
+    if (value is Time) {
+      final h = value.hour.toString().padLeft(2, '0');
+      final m = value.minute.toString().padLeft(2, '0');
+      return '$h:$m';
+    }
+    final s = value.toString();
+    return s.length >= 5 ? s.substring(0, 5) : s;
+  }
+
   Facility _rowToFacility(dynamic row) {
     return Facility(
       id: row[0] as String,
@@ -1208,8 +1225,8 @@ class BookingService {
     return FacilitySlotConfig(
       id: row[0] as String,
       facilityId: row[1] as String,
-      startTime: (row[2] as String).substring(0, 5), // HH:MM
-      endTime: (row[3] as String).substring(0, 5),
+      startTime: _formatSlotTime(row[2] as Object), // HH:MM
+      endTime: _formatSlotTime(row[3] as Object),
       isActive: row[4] as bool,
       createdAt: row[5] as DateTime,
     );

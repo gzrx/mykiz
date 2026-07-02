@@ -109,22 +109,23 @@ void main() {
         for (final route in routes) {
           final result = computeRedirect(status, route);
 
-          // Compute expected per the defined redirect logic
+          // Compute expected per the defined redirect logic.
+          // `loading` is gated identically to `unauthenticated`: pass through
+          // only on /login, otherwise redirect to /login (prevents the
+          // dashboard from building pre-token during login).
           final String? expected;
           if (status == AuthStatus.unknown) {
-            expected = null;
-          } else if (status == AuthStatus.loading) {
             expected = null;
           } else if (status == AuthStatus.authenticated &&
               route == '/login') {
             expected = '/dashboard';
           } else if (status == AuthStatus.authenticated) {
             expected = null;
-          } else if (status == AuthStatus.unauthenticated &&
-              route == '/login') {
+          } else if (route == '/login') {
+            // unauthenticated or loading, already on /login
             expected = null;
           } else {
-            // unauthenticated + non-login
+            // unauthenticated or loading, on a protected route
             expected = '/login';
           }
 

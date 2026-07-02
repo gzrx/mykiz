@@ -27,6 +27,12 @@ class _AnnouncementsListScreenState
   void initState() {
     super.initState();
     _scrollController.addListener(_onScroll);
+    // Fetch on first load (post-auth). Mirrors the complaints module so the
+    // list loads correctly on first navigation instead of surfacing a stale
+    // pre-auth error that only clears on Retry.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(announcementsListProvider.notifier).loadAnnouncements();
+    });
   }
 
   @override

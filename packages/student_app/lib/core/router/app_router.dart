@@ -31,11 +31,17 @@ abstract final class AppRoutes {
 /// [status] and the [currentRoute] the user is attempting to visit.
 String? computeRedirect(AuthStatus status, String currentRoute) {
   if (status == AuthStatus.unknown) return null; // bootstrapping: show splash
-  if (status == AuthStatus.loading) return null;
 
   final isAuthenticated = status == AuthStatus.authenticated;
   final isOnLogin = currentRoute == AppRoutes.login;
 
+  // `loading` (login in flight) is NOT authenticated. It must still be gated
+  // like `unauthenticated`: the router is rebuilt on every auth-state change
+  // and resets to its initialLocation (/dashboard), so treating `loading` as a
+  // pass-through would build the dashboard before the token is set. Its module
+  // tiles then fire authenticated requests without a token, caching 401s in
+  // long-lived providers (announcements/accommodation). Redirect to /login
+  // instead; the login screen already reflects the in-flight state.
   if (!isAuthenticated && !isOnLogin) return AppRoutes.login;
   if (isAuthenticated && isOnLogin) return AppRoutes.dashboard;
 

@@ -56,10 +56,13 @@ class AnnouncementsListState {
 
 /// Notifier that manages the announcements list state with pagination.
 class AnnouncementsListNotifier extends StateNotifier<AnnouncementsListState> {
+  // ponytail: load is triggered from the screen's initState (post-auth), not
+  // here. Fetching in the constructor fires at provider-creation time — e.g.
+  // when the dashboard badge first reads this provider — which can run before
+  // the auth token is set and cache a 401 in this long-lived notifier. Mirror
+  // the complaints module, which loads from the screen and works first try.
   AnnouncementsListNotifier(this._repository)
-      : super(const AnnouncementsListState()) {
-    loadAnnouncements();
-  }
+      : super(const AnnouncementsListState());
 
   final AnnouncementsRepository _repository;
 
