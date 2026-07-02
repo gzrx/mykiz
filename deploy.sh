@@ -19,7 +19,7 @@ echo "==> Restarting backend..."
 sudo -n systemctl restart mykiz-backend
 
 echo "==> Rebuilding admin web..."
-cd packages/admin_web && flutter pub get && flutter build web --release --dart-define=API_BASE_URL=https://api.isaacfurqan.dev 2>&1 | tail -1
+cd packages/admin_web && flutter pub get && flutter build web --release --no-tree-shake-icons --dart-define=API_BASE_URL=https://api.isaacfurqan.dev 2>&1 | tail -1
 chmod -R o+rX build/web
 cd ~/mykiz
 
